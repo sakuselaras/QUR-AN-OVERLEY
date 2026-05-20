@@ -354,10 +354,10 @@
 
         // Inisialisasi Audio Player Utama & Preloader (CORS Aman)
         let audioPlayer = new Audio();
-        audioPlayer.crossOrigin = "anonymous"; 
+        // HAPUS crossOrigin = "anonymous", ini penyebab utama blokir CDN!
         
         let preloaderPlayer = new Audio();
-        preloaderPlayer.crossOrigin = "anonymous";
+        // HAPUS crossOrigin preloader
         preloaderPlayer.muted = true; // Preloader tidak boleh berbunyi, hanya menarik data
 
         const QORI_MAP = {
@@ -371,32 +371,59 @@
             return globalIndex + ayatNum;
         }
 
-        /* --- MAGIC UNLOCKER: Menjebol Blokir Autoplay Browser HP --- */
-        function unlockAudioEngine() {
+        /* --- MAGIC UNLOCKER: Menjebol Blokir Autoplay Browser HP & PC --- */
+        function initAudioEngine() {
             if (audioUnlocked) return;
             try {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 if (!audioCtx) audioCtx = new AudioContext();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
+                
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume().then(() => {
+                        console.log("AudioContext resumed successfully.");
+                    }).catch(e => console.log("Abaikan error resume", e)); // Tambahkan Catch agar tidak fatal
+                }
                 
                 // Memicu silence base64 audio play agar browser percaya user berinteraksi
-                const silentWav = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
-                const unlockPlayer = new Audio(silentWav);
-                unlockPlayer.play().then(() => {
+                // Menggunakan Web Audio API untuk silence alih-alih elemen Audio HTML5 yang sering diblokir
+                const buffer = audioCtx.createBuffer(1, 1, 22050); // 1 detik silence
+                const source = audioCtx.createBufferSource();
+                source.buffer = buffer;
+                source.connect(audioCtx.destination);
+                source.onended = () => {
                     audioUnlocked = true;
-                    console.log("Audio Engine Berhasil Terbuka!");
-                }).catch(e => console.warn(e));
+                    console.log("Audio Engine Berhasil Terbuka dengan Web Audio API!");
+                    
+                    // Force load pada elemen Audio HTML5 utama setelah context aktif
+                    audioPlayer.load();
+                };
+                source.start(0);
 
                 // Bersihkan event listener jika sudah jebol
-                ['touchstart', 'touchend', 'click'].forEach(evt => document.removeEventListener(evt, unlockAudioEngine));
+                ['touchstart', 'touchend', 'click', 'keydown'].forEach(evt => document.removeEventListener(evt, unlockAudioEngine));
             } catch (e) {
                 console.log("Web Audio API Fallback", e);
-                audioUnlocked = true;
+                // Fallback ke metode lama jika Web Audio gagal
+                try {
+                    const silentWav = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+                    const unlockPlayer = new Audio(silentWav);
+                    unlockPlayer.play().then(() => {
+                        audioUnlocked = true;
+                        console.log("Audio Engine Berhasil Terbuka (Fallback)!");
+                        audioPlayer.load();
+                    }).catch(err => console.warn("Fallback unlock failed", err));
+                } catch(err2) {
+                     audioUnlocked = true;
+                }
             }
         }
         
-        // Pancing unlocker pada sentuhan pertama di layar
-        ['touchstart', 'touchend', 'click'].forEach(evt => document.addEventListener(evt, unlockAudioEngine, { once: true }));
+        // Pancing unlocker pada SEMUA interaksi awal
+        function unlockAudioEngine() {
+            initAudioEngine();
+        }
+        
+        ['touchstart', 'touchend', 'click', 'keydown', 'scroll'].forEach(evt => document.addEventListener(evt, unlockAudioEngine, { once: true, passive: true }));
 
         /* --- MANAJEMEN SIKLUS HIDUP TAB (VISIBILITY API) --- */
         document.addEventListener("visibilitychange", () => {
@@ -423,7 +450,7 @@
             clearTimeout(stallCheckTimeout);
             stallCheckTimeout = setTimeout(() => {
                 if (isPlaying) handleAudioError();
-            }, 3500);
+            }, 15000); // UBAH ke 15 detik! Beri waktu browser bernapas saat jaringan lambat
         });
 
         audioPlayer.addEventListener('playing', () => {
@@ -442,25 +469,29 @@
             if (audioRetryCount < 2) {
                 audioRetryCount++;
                 const currentTrack = audioPlaylist[currentAudioIndex];
-                if (currentTrack) {
+                if (currentTrack && currentTrack.src) {
                     showToast("Koneksi tidak stabil, memulihkan audio...", "info");
                     
-                    if (currentTrack.src.includes('equran') || currentTrack.src.includes('neo.id')) {
-                        const selectedQori = qoriSelect ? qoriSelect.value : '03';
-                        const identifier = QORI_MAP[selectedQori] || 'ar.abdurrahmaansudaas';
-                        let fallbackUrl = '';
-                        
-                        if (currentTrack.nomorAyat === 'bismillah') {
-                            fallbackUrl = `https://cdn.islamic.network/quran/audio/128/${identifier}/1.mp3`;
-                        } else {
-                            const surahNo = parseInt(surahSelect.value);
-                            const globalNum = getGlobalAyahNumber(surahNo, currentTrack.nomorAyat);
-                            fallbackUrl = `https://cdn.islamic.network/quran/audio/128/${identifier}/${globalNum}.mp3`;
-                        }
-                        currentTrack.src = fallbackUrl;
+                    // Pastikan AudioContext aktif sebelum mencoba play lagi
+                    if (audioCtx && audioCtx.state === 'suspended') {
+                         audioCtx.resume();
                     }
                     
+                    const selectedQori = qoriSelect ? qoriSelect.value : '03';
+                    const identifier = QORI_MAP[selectedQori] || 'ar.abdurrahmaansudaas';
+                    let fallbackUrl = '';
+                    
+                    if (currentTrack.nomorAyat === 'bismillah') {
+                        fallbackUrl = `https://cdn.islamic.network/quran/audio/128/${identifier}/1.mp3`;
+                    } else {
+                        const surahNo = parseInt(surahSelect.value);
+                        const globalNum = getGlobalAyahNumber(surahNo, currentTrack.nomorAyat);
+                        fallbackUrl = `https://cdn.islamic.network/quran/audio/128/${identifier}/${globalNum}.mp3`;
+                    }
+                    currentTrack.src = fallbackUrl;
+                    
                     const currTime = audioPlayer.currentTime;
+                    // Hapus trik parameter ?retry karena beberapa CDN memblokir query params sehingga file terdeteksi sebagai "unsupported source" (403/404 HTML)
                     audioPlayer.src = currentTrack.src;
                     audioPlayer.load();
                     
@@ -474,9 +505,27 @@
                                     audioPlayer.removeEventListener('loadedmetadata', onMetadata);
                                 });
                             }
-                        } catch(e) {}
+                        } catch (err) {
+                            console.warn("Gagal set waktu:", err);
+                        }
                     }
-                    audioPlayer.play().catch(e => console.warn(e));
+                    
+                    // Gunakan promise berantai dan timeout untuk bypass blokir DOMException
+                    const playPromise = audioPlayer.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(error => {
+                            console.warn("Auto-recovery play failed:", error);
+                            // Jangan panggil initAudioEngine() berulang di sini agar tidak loop
+                            setTimeout(() => {
+                                if (audioPlayer.src && !audioPlayer.src.endsWith('/')) {
+                                    const retryPlay = audioPlayer.play();
+                                    if (retryPlay !== undefined) {
+                                        retryPlay.catch(e => console.error("Final recovery failed", e));
+                                    }
+                                }
+                            }, 1000);
+                        });
+                    }
                 }
             } else {
                 showToast("Audio terhenti. Silakan tekan Play ulang.", "error");
@@ -657,14 +706,14 @@
             audioPlaylist = [];
             
             if (surahNo != 9 && !(surahNo == 1 && start == 1)) {
-                const firstAudio = ayatToRender[0].audio[selectedQori];
+                const firstAudio = (ayatToRender[0] && ayatToRender[0].audio) ? ayatToRender[0].audio[selectedQori] : null;
                 const bismillahAudioUrl = getBismillahAudioUrl(firstAudio, selectedQori);
                 const secureBismillahUrl = bismillahAudioUrl ? bismillahAudioUrl.replace('http://', 'https://') : '';
                 audioPlaylist.push({ src: secureBismillahUrl, nomorAyat: 'bismillah' });
             }
             
             ayatToRender.forEach(a => {
-                let audioUrl = a.audio[selectedQori];
+                let audioUrl = (a.audio) ? a.audio[selectedQori] : null;
                 if (!audioUrl) {
                     const globalNum = getGlobalAyahNumber(parseInt(surahNo), a.nomorAyat);
                     const identifier = QORI_MAP[selectedQori] || 'ar.abdurrahmaansudaas';
@@ -731,13 +780,13 @@
                 
                 audioPlaylist = [];
                 if (surahNo != 9 && !(surahNo == 1 && start == 1)) {
-                    const firstAudio = ayatToRender[0].audio[selectedQori];
+                    const firstAudio = (ayatToRender[0] && ayatToRender[0].audio) ? ayatToRender[0].audio[selectedQori] : null;
                     const bismillahAudioUrl = getBismillahAudioUrl(firstAudio, selectedQori);
                     audioPlaylist.push({ src: bismillahAudioUrl ? bismillahAudioUrl.replace('http://', 'https://') : '', nomorAyat: 'bismillah' });
                 }
                 
                 ayatToRender.forEach(a => {
-                    let audioUrl = a.audio[selectedQori];
+                    let audioUrl = (a.audio) ? a.audio[selectedQori] : null;
                     if (!audioUrl) {
                         const globalNum = getGlobalAyahNumber(parseInt(surahNo), a.nomorAyat);
                         const identifier = QORI_MAP[selectedQori] || 'ar.abdurrahmaansudaas';
@@ -754,7 +803,7 @@
             if (audioPlaylist.length === 0) { showToast("Tampilkan ayat terlebih dahulu", "info"); return; }
             
             // Jaminan Unlocker API Audio Jalan saat Play Ditekan
-            unlockAudioEngine();
+            initAudioEngine();
 
             if (isPlaying) {
                 audioPlayer.pause(); 
@@ -763,11 +812,26 @@
                 releaseWakeLock();
             } else {
                 requestWakeLock();
-                if (!audioPlayer.src || audioPlayer.src === window.location.href) {
-                    playAyatTrack(currentAudioIndex);
+                
+                // Eksekusi Play dalam Promise handling yang ketat
+                let playAction;
+                if (!audioPlayer.src || audioPlayer.src === window.location.href || audioPlayer.src.endsWith('/')) {
+                     playAction = () => playAyatTrack(currentAudioIndex);
                 } else {
-                    audioPlayer.play().catch(e => console.warn(e));
+                     playAction = () => {
+                         const promise = audioPlayer.play();
+                         if (promise !== undefined) {
+                             promise.catch(e => {
+                                 console.warn("Play paused/blocked", e);
+                                 // Jika diblokir, paksa load ulang dan coba play setelah jeda
+                                 audioPlayer.load();
+                                 setTimeout(() => audioPlayer.play().catch(err => console.error(err)), 100);
+                             });
+                         }
+                     };
                 }
+                
+                playAction();
                 isPlaying = true; 
             }
         }
@@ -776,9 +840,28 @@
             if (index >= audioPlaylist.length) { resetAudioPlayer(); return; }
 
             const currentTrack = audioPlaylist[index];
+            if (!currentTrack || !currentTrack.src) {
+                currentAudioIndex++;
+                playAyatTrack(currentAudioIndex);
+                return;
+            }
+            
             audioPlayer.src = currentTrack.src;
             audioPlayer.load(); 
-            audioPlayer.play().catch(e => console.warn(e));
+            
+            const playPromise = audioPlayer.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.warn("Track play blocked:", error);
+                    // Tindakan penyelamatan jika autoplay diblokir saat ganti track
+                    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+                    setTimeout(() => {
+                        if (audioPlayer.src && !audioPlayer.src.endsWith('/')) {
+                            audioPlayer.play().catch(e => console.error("Force play failed", e));
+                        }
+                    }, 150);
+                });
+            }
 
             // RESET VISUAL: Reset warna kata dan sembunyikan ayat lain secara instan
             document.querySelectorAll('.ayat-wrapper').forEach(el => {
@@ -793,9 +876,12 @@
 
             // ZERO-DELAY PRELOADER: Pre-buffer ayat berikutnya di background
             if (index + 1 < audioPlaylist.length) {
-                preloaderPlayer.src = audioPlaylist[index + 1].src.replace('http://', 'https://');
-                preloaderPlayer.preload = "auto";
-                preloaderPlayer.load();
+                const nextSrc = audioPlaylist[index + 1].src;
+                if (nextSrc) {
+                    preloaderPlayer.src = nextSrc.replace('http://', 'https://');
+                    preloaderPlayer.preload = "auto";
+                    preloaderPlayer.load();
+                }
             }
         }
 
