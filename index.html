@@ -98,9 +98,8 @@
 </head>
 <body class="min-h-screen flex justify-center pb-10">
     
-    <!-- ELEMEN FISIK AUDIO: Rahasia jitu anti-blokir browser -->
+    <!-- ELEMEN FISIK AUDIO: Mengandalkan sifat alami HTML5 -->
     <audio id="core-audio-player" playsinline></audio>
-    <!-- Preloader dihapus karena sering memicu limit koneksi CDN pada Mobile -->
 
     <div id="toast-container"></div>
 
@@ -119,7 +118,7 @@
             </button>
         </div>
 
-        <!-- Green Screen / Video Preview Area (Default ke Black Solid) -->
+        <!-- Green Screen / Video Preview Area -->
         <div id="preview-container" class="w-full aspect-[9/16] bg-[#000000] rounded-2xl relative overflow-hidden flex flex-col items-center justify-center shadow-lg border border-gray-800">
             
             <!-- Default / Loading State -->
@@ -138,7 +137,7 @@
                 <div class="skeleton h-4 w-4/6 self-center rounded-md"></div>
             </div>
 
-            <!-- Teks Overlay Quran (Awalnya disembunyikan) -->
+            <!-- Teks Overlay Quran -->
             <div id="quran-overlay" class="absolute inset-0 p-6 flex flex-col justify-center overflow-y-auto no-scrollbar hidden">
             </div>
         </div>
@@ -236,12 +235,8 @@
 
     <script>
         /* =========================================================================
-           1. SISTEM INTI: KEAMANAN, CACHE LRU, & MANAJEMEN STATE LOKAL
+           1. SISTEM INTI & FETCH API
            ========================================================================= */
-        // Menangkap error agar tidak merusak UI, namun tetap log ke console
-        window.addEventListener('error', function(e) { console.warn("Caught error:", e.message); });
-        window.addEventListener('unhandledrejection', function(e) { console.warn("Unhandled promise:", e.reason); });
-
         function showToast(message, type = 'info') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -267,29 +262,15 @@
 
         const LOCAL_SURAH_META = [{"nomor":1,"namaLatin":"Al-Fatihah","jumlahAyat":7},{"nomor":2,"namaLatin":"Al-Baqarah","jumlahAyat":286},{"nomor":3,"namaLatin":"Ali 'Imran","jumlahAyat":200},{"nomor":4,"namaLatin":"An-Nisa'","jumlahAyat":176},{"nomor":5,"namaLatin":"Al-Ma'idah","jumlahAyat":120},{"nomor":6,"namaLatin":"Al-An'am","jumlahAyat":165},{"nomor":7,"namaLatin":"Al-A'raf","jumlahAyat":206},{"nomor":8,"namaLatin":"Al-Anfal","jumlahAyat":75},{"nomor":9,"namaLatin":"At-Taubah","jumlahAyat":129},{"nomor":10,"namaLatin":"Yunus","jumlahAyat":109},{"nomor":11,"namaLatin":"Hud","jumlahAyat":123},{"nomor":12,"namaLatin":"Yusuf","jumlahAyat":111},{"nomor":13,"namaLatin":"Ar-Ra'd","jumlahAyat":43},{"nomor":14,"namaLatin":"Ibrahim","jumlahAyat":52},{"nomor":15,"namaLatin":"Al-Hijr","jumlahAyat":99},{"nomor":16,"namaLatin":"An-Nahl","jumlahAyat":128},{"nomor":17,"namaLatin":"Al-Isra'","jumlahAyat":111},{"nomor":18,"namaLatin":"Al-Kahf","jumlahAyat":110},{"nomor":19,"namaLatin":"Maryam","jumlahAyat":98},{"nomor":20,"namaLatin":"Taha","jumlahAyat":135},{"nomor":21,"namaLatin":"Al-Anbiya'","jumlahAyat":112},{"nomor":22,"namaLatin":"Al-Hajj","jumlahAyat":78},{"nomor":23,"namaLatin":"Al-Mu'minun","jumlahAyat":118},{"nomor":24,"namaLatin":"An-Nur","jumlahAyat":64},{"nomor":25,"namaLatin":"Al-Furqan","jumlahAyat":77},{"nomor":26,"namaLatin":"Asy-Syu'ara'","jumlahAyat":227},{"nomor":27,"namaLatin":"An-Naml","jumlahAyat":93},{"nomor":28,"namaLatin":"Al-Qasas","jumlahAyat":88},{"nomor":29,"namaLatin":"Al-'Ankabut","jumlahAyat":69},{"nomor":30,"namaLatin":"Ar-Rum","jumlahAyat":60},{"nomor":31,"namaLatin":"Luqman","jumlahAyat":34},{"nomor":32,"namaLatin":"As-Sajdah","jumlahAyat":30},{"nomor":33,"namaLatin":"Al-Ahzab","jumlahAyat":73},{"nomor":34,"namaLatin":"Saba'","jumlahAyat":54},{"nomor":35,"namaLatin":"Fatir","jumlahAyat":45},{"nomor":36,"namaLatin":"Yasin","jumlahAyat":83},{"nomor":37,"namaLatin":"As-Saffat","jumlahAyat":182},{"nomor":38,"namaLatin":"Sad","jumlahAyat":88},{"nomor":39,"namaLatin":"Az-Zumar","jumlahAyat":75},{"nomor":40,"namaLatin":"Gafir","jumlahAyat":85},{"nomor":41,"namaLatin":"Fussilat","jumlahAyat":54},{"nomor":42,"namaLatin":"Asy-Syura","jumlahAyat":53},{"nomor":43,"namaLatin":"Az-Zukhruf","jumlahAyat":89},{"nomor":44,"namaLatin":"Ad-Dukhan","jumlahAyat":59},{"nomor":45,"namaLatin":"Al-Jasiyah","jumlahAyat":37},{"nomor":46,"namaLatin":"Al-Ahqaf","jumlahAyat":35},{"nomor":47,"namaLatin":"Muhammad","jumlahAyat":38},{"nomor":48,"namaLatin":"Al-Fath","jumlahAyat":29},{"nomor":49,"namaLatin":"Al-Hujurat","jumlahAyat":18},{"nomor":50,"namaLatin":"Qaf","jumlahAyat":45},{"nomor":51,"namaLatin":"Az-Zariyat","jumlahAyat":60},{"nomor":52,"namaLatin":"At-Tur","jumlahAyat":49},{"nomor":53,"namaLatin":"An-Najm","jumlahAyat":62},{"nomor":54,"namaLatin":"Al-Qamar","jumlahAyat":55},{"nomor":55,"namaLatin":"Ar-Rahman","jumlahAyat":78},{"nomor":56,"namaLatin":"Al-Waqi'ah","jumlahAyat":96},{"nomor":57,"namaLatin":"Al-Hadid","jumlahAyat":29},{"nomor":58,"namaLatin":"Al-Mujadalah","jumlahAyat":22},{"nomor":59,"namaLatin":"Al-Hasyr","jumlahAyat":24},{"nomor":60,"namaLatin":"Al-Mumtahanah","jumlahAyat":13},{"nomor":61,"namaLatin":"As-Saff","jumlahAyat":14},{"nomor":62,"namaLatin":"Al-Jumu'ah","jumlahAyat":11},{"nomor":63,"namaLatin":"Al-Munafiqun","jumlahAyat":11},{"nomor":64,"namaLatin":"At-Tagabun","jumlahAyat":18},{"nomor":65,"namaLatin":"At-Talaq","jumlahAyat":12},{"nomor":66,"namaLatin":"At-Tahrim","jumlahAyat":12},{"nomor":67,"namaLatin":"Al-Mulk","jumlahAyat":30},{"nomor":68,"namaLatin":"Al-Qalam","jumlahAyat":52},{"nomor":69,"namaLatin":"Al-Haqqah","jumlahAyat":52},{"nomor":70,"namaLatin":"Al-Ma'arij","jumlahAyat":44},{"nomor":71,"namaLatin":"Nuh","jumlahAyat":28},{"nomor":72,"namaLatin":"Al-Jinn","jumlahAyat":28},{"nomor":73,"namaLatin":"Al-Muzzammil","jumlahAyat":20},{"nomor":74,"namaLatin":"Al-Muddassir","jumlahAyat":56},{"nomor":75,"namaLatin":"Al-Qiyamah","jumlahAyat":40},{"nomor":76,"namaLatin":"Al-Insan","jumlahAyat":31},{"nomor":77,"namaLatin":"Al-Mursalat","jumlahAyat":50},{"nomor":78,"namaLatin":"An-Naba'","jumlahAyat":40},{"nomor":79,"namaLatin":"An-Nazi'at","jumlahAyat":46},{"nomor":80,"namaLatin":"'Abasa","jumlahAyat":42},{"nomor":81,"namaLatin":"At-Takwir","jumlahAyat":29},{"nomor":82,"namaLatin":"Al-Infitar","jumlahAyat":19},{"nomor":83,"namaLatin":"Al-Mutaffifin","jumlahAyat":36},{"nomor":84,"namaLatin":"Al-Insyiqaq","jumlahAyat":25},{"nomor":85,"namaLatin":"Al-Buruj","jumlahAyat":22},{"nomor":86,"namaLatin":"At-Tariq","jumlahAyat":17},{"nomor":87,"namaLatin":"Al-A'la","jumlahAyat":19},{"nomor":88,"namaLatin":"Al-Gasyiyah","jumlahAyat":26},{"nomor":89,"namaLatin":"Al-Fajr","jumlahAyat":30},{"nomor":90,"namaLatin":"Al-Balad","jumlahAyat":20},{"nomor":91,"namaLatin":"Asy-Syams","jumlahAyat":15},{"nomor":92,"namaLatin":"Al-Lail","jumlahAyat":21},{"nomor":93,"namaLatin":"Ad-Duha","jumlahAyat":11},{"nomor":94,"namaLatin":"Asy-Syarh","jumlahAyat":8},{"nomor":95,"namaLatin":"At-Tin","jumlahAyat":8},{"nomor":96,"namaLatin":"Al-'Alaq","jumlahAyat":19},{"nomor":97,"namaLatin":"Al-Qadr","jumlahAyat":5},{"nomor":98,"namaLatin":"Al-Bayyinah","jumlahAyat":8},{"nomor":99,"namaLatin":"Az-Zalzalah","jumlahAyat":8},{"nomor":100,"namaLatin":"Al-'Adiyat","jumlahAyat":11},{"nomor":101,"namaLatin":"Al-Qari'ah","jumlahAyat":11},{"nomor":102,"namaLatin":"At-Takasur","jumlahAyat":8},{"nomor":103,"namaLatin":"Al-'Asr","jumlahAyat":3},{"nomor":104,"namaLatin":"Al-Humazah","jumlahAyat":9},{"nomor":105,"namaLatin":"Al-Fil","jumlahAyat":5},{"nomor":106,"namaLatin":"Quraisy","jumlahAyat":4},{"nomor":107,"namaLatin":"Al-Ma'un","jumlahAyat":7},{"nomor":108,"namaLatin":"Al-Kausar","jumlahAyat":3},{"nomor":109,"namaLatin":"Al-Kafirun","jumlahAyat":6},{"nomor":110,"namaLatin":"An-Nasr","jumlahAyat":3},{"nomor":111,"namaLatin":"Al-Lahab","jumlahAyat":5},{"nomor":112,"namaLatin":"Al-Ikhlas","jumlahAyat":4},{"nomor":113,"namaLatin":"Al-Falaq","jumlahAyat":5},{"nomor":114,"namaLatin":"An-Nas","jumlahAyat":6}];
 
-        /* =========================================================================
-           2. FETCH ENGINE PREMIUM (Multi-API, Retry, Timeout, Cache)
-           ========================================================================= */
         async function robustFetchWithCache(endpointId, type, surahNo) {
             const cacheKey = `QO_DATA_${type}_${surahNo || 'ALL'}`;
-            
-            try {
-                const cached = localStorage.getItem(cacheKey);
-                if (cached) return JSON.parse(cached);
-            } catch(e) {}
+            try { const cached = localStorage.getItem(cacheKey); if (cached) return JSON.parse(cached); } catch(e) {}
 
             let urls = [];
-            if (type === 'surat_list') {
-                urls = ['https://equran.id/api/v2/surat', 'https://equran-api.vercel.app/api/v2/surat'];
-            } else if (type === 'surat_detail') {
-                urls = [
-                    `https://equran.id/api/v2/surat/${surahNo}`,
-                    `https://equran-api.vercel.app/api/v2/surat/${surahNo}`,
-                    `https://api.alquran.cloud/v1/surah/${surahNo}/editions/quran-uthmani,en.transliteration,id.indonesian`
-                ];
-            } else if (type === 'english') {
-                urls = [`https://api.alquran.cloud/v1/surah/${surahNo}/en.asad`];
-            }
+            if (type === 'surat_list') { urls = ['https://equran.id/api/v2/surat', 'https://equran-api.vercel.app/api/v2/surat']; } 
+            else if (type === 'surat_detail') {
+                urls = [ `https://equran.id/api/v2/surat/${surahNo}`, `https://equran-api.vercel.app/api/v2/surat/${surahNo}`, `https://api.alquran.cloud/v1/surah/${surahNo}/editions/quran-uthmani,en.transliteration,id.indonesian` ];
+            } else if (type === 'english') { urls = [`https://api.alquran.cloud/v1/surah/${surahNo}/en.asad`]; }
 
             const MAX_RETRIES = 2;
             let lastError;
@@ -311,15 +292,12 @@
                                 json = {
                                     code: 200, message: "success",
                                     data: {
-                                        nomor: parseInt(surahNo),
-                                        namaLatin: LOCAL_SURAH_META.find(s => s.nomor === parseInt(surahNo))?.namaLatin || "Surat",
+                                        nomor: parseInt(surahNo), namaLatin: LOCAL_SURAH_META.find(s => s.nomor === parseInt(surahNo))?.namaLatin || "Surat",
                                         ayat: alquranData[0].ayahs.map((ayah, idx) => {
                                             const globalNum = ayah.number;
                                             return {
-                                                nomorAyat: ayah.numberInSurah,
-                                                teksArab: ayah.text,
-                                                teksLatin: alquranData[1].ayahs[idx].text,
-                                                teksIndonesia: alquranData[2].ayahs[idx].text,
+                                                nomorAyat: ayah.numberInSurah, teksArab: ayah.text,
+                                                teksLatin: alquranData[1].ayahs[idx].text, teksIndonesia: alquranData[2].ayahs[idx].text,
                                                 audio: {
                                                     '01': `https://cdn.islamic.network/quran/audio/128/ar.abdullahbasfar/${globalNum}.mp3`,
                                                     '02': `https://cdn.islamic.network/quran/audio/128/ar.hudhaify/${globalNum}.mp3`,
@@ -333,9 +311,7 @@
                                 };
                             }
                         }
-                        
-                        safeSaveToCache(cacheKey, JSON.stringify(json));
-                        return json;
+                        safeSaveToCache(cacheKey, JSON.stringify(json)); return json;
                     } catch (err) { lastError = err; }
                 }
             }
@@ -343,7 +319,7 @@
         }
 
         /* =========================================================================
-           3. AUDIO ENGINE PALING JITU (PHYSICAL DOM & SILENT UNLOCK)
+           2. AUDIO ENGINE & STATE MANAJEMEN (STANDAR HTML5 MURNI)
            ========================================================================= */
         let surahDataList = LOCAL_SURAH_META; 
         let currentSurahDetail = null;
@@ -353,9 +329,8 @@
         let currentAudioIndex = 0;
         let isPlaying = false;
         let wakeLock = null;
-        let isPlaylistLoaded = false; // Penanda penting agar audio tidak tumpang tindih
+        let isPlaylistLoaded = false;
         
-        // MENGAMBIL ELEMEN FISIK DARI HTML (Anti dibuang memori oleh iOS)
         const audioPlayer = document.getElementById('core-audio-player');
         
         const QORI_MAP = {
@@ -369,31 +344,18 @@
             return globalIndex + ayatNum;
         }
 
-        /* --- NATURAL BUFFERING & GRACEFUL ERROR HANDLING --- */
-        // Dihapus fungsi hack base64 unlocker yang justru membuat bentrok state audio.
-        // Browser modern hanya butuh 1x klik Play dari user secara langsung.
-
-        audioPlayer.addEventListener('waiting', () => {
-            updatePlayButtonIcon('buffer'); 
+        // Murni Indikator UI (Tidak ada intervensi koneksi)
+        audioPlayer.addEventListener('waiting', () => { if (isPlaying) updatePlayButtonIcon('buffer'); });
+        audioPlayer.addEventListener('playing', () => { updatePlayButtonIcon(true); isPlaying = true; });
+        audioPlayer.addEventListener('pause', () => { updatePlayButtonIcon(false); isPlaying = false; });
+        audioPlayer.addEventListener('error', (e) => { 
+            console.warn("Audio Network Error");
+            showToast("Gagal memuat. Pastikan koneksi stabil & ketuk Play lagi.", "error");
+            updatePlayButtonIcon(false);
+            isPlaying = false;
         });
 
-        audioPlayer.addEventListener('playing', () => {
-            updatePlayButtonIcon(true);
-        });
-
-        audioPlayer.addEventListener('pause', () => {
-            if (!isPlaying) updatePlayButtonIcon(false);
-        });
-
-        // Error sejati (bukan loading lambat)
-        audioPlayer.onerror = (e) => { 
-            if (isPlaying) {
-                console.warn("Audio Error Event", e);
-                showToast("Gagal memuat audio. Sentuh Play kembali untuk mencoba.", "error");
-                resetAudioPlayer();
-            }
-        };
-
+        // Kontrol UI Dasar
         const surahSelect = document.getElementById('surah-select');
         const ayatStartInput = document.getElementById('ayat-start');
         const ayatEndInput = document.getElementById('ayat-end');
@@ -406,15 +368,8 @@
         const bgSelect = document.getElementById('bg-select');
         const qoriSelect = document.getElementById('qori-select');
 
-        // Wake Lock Manager
-        async function requestWakeLock() {
-            try {
-                if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen');
-            } catch (err) {}
-        }
-        function releaseWakeLock() {
-            if (wakeLock !== null) wakeLock.release().then(() => { wakeLock = null; });
-        }
+        async function requestWakeLock() { try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {} }
+        function releaseWakeLock() { if (wakeLock !== null) wakeLock.release().then(() => { wakeLock = null; }); }
 
         document.addEventListener('DOMContentLoaded', () => {
             renderSurahDropdown(LOCAL_SURAH_META);
@@ -435,9 +390,6 @@
             if (keepValue && currentVal) surahSelect.value = currentVal;
         }
 
-        /* =========================================================================
-           4. MANAJEMEN STATE UI LOKAL
-           ========================================================================= */
         function saveState() {
             const state = {
                 surah: surahSelect.value, start: ayatStartInput.value, end: ayatEndInput.value,
@@ -465,7 +417,6 @@
         }
 
         function onSurahChange() { updateAyatRange(); saveState(); }
-
         function updateAyatRange() {
             const selectedSurahNo = parseInt(surahSelect.value);
             const surahInfo = surahDataList.find(s => s.nomor === selectedSurahNo);
@@ -474,27 +425,20 @@
                 ayatEndInput.value = surahInfo.jumlahAyat > 5 ? 5 : surahInfo.jumlahAyat;
             }
         }
-
         function setFullSurah() {
             const selectedSurahNo = parseInt(surahSelect.value);
             const surahInfo = surahDataList.find(s => s.nomor === selectedSurahNo);
-            if(surahInfo) {
-                ayatStartInput.value = 1; ayatEndInput.value = surahInfo.jumlahAyat; saveState();
-            }
+            if(surahInfo) { ayatStartInput.value = 1; ayatEndInput.value = surahInfo.jumlahAyat; saveState(); }
         }
 
         function changeBackground() {
             const val = bgSelect.value;
             previewContainer.style.backgroundColor = (val === 'green') ? '#00ff00' : (val === 'blue') ? '#0000ff' : '#000000';
         }
-
         function changeBackgroundAndSave() { changeBackground(); saveState(); }
         function updateViewAndSave() { saveState(); if(!overlayContainer.classList.contains('hidden')) tampilkanOverlay(); }
         function updateAudioSourceAndSave() { saveState(); updateAudioSource(); }
 
-        /* =========================================================================
-           5. CORE LOGIC TAMPILAN & GENERATOR ELEMEN VISUAL
-           ========================================================================= */
         function toggleUIState(isLoading) {
             const btn = document.querySelector('button[onclick="tampilkanOverlay()"]');
             if(btn) {
@@ -505,9 +449,7 @@
                 defaultPreview.classList.add('hidden');
                 overlayContainer.classList.add('hidden');
                 skeletonLoader.classList.remove('hidden');
-            } else {
-                skeletonLoader.classList.add('hidden');
-            }
+            } else { skeletonLoader.classList.add('hidden'); }
         }
 
         async function tampilkanOverlay() {
@@ -518,9 +460,7 @@
             if(!surahNo || isNaN(parseInt(surahNo))) { showToast("Pilih surah terlebih dahulu.", "error"); return; }
             if(start > end) { showToast("Ayat mulai tidak boleh lebih besar dari ayat akhir.", "error"); return; }
 
-            saveState();
-            toggleUIState(true);
-            resetAudioPlayer();
+            saveState(); toggleUIState(true); resetAudioPlayer();
 
             try {
                 showToast("Menyiapkan data ayat...", "success");
@@ -536,7 +476,7 @@
                 }
                 
                 buildOverlayAndAudio(surahNo, start, end, showEng);
-                isPlaylistLoaded = false; // Reset status playlist setiap kali ayat baru dimuat
+                isPlaylistLoaded = false;
                 skeletonLoader.classList.add('hidden');
                 overlayContainer.classList.remove('hidden');
 
@@ -545,9 +485,7 @@
                 defaultPreview.classList.remove('hidden');
                 document.getElementById('default-preview-text').innerText = "Gagal memuat. Mode Offline Aktif.";
                 showToast("Gagal: Periksa koneksi internet Anda", "error");
-            } finally {
-                toggleUIState(false);
-            }
+            } finally { toggleUIState(false); }
         }
 
         function getBismillahAudioUrl(firstAudio, selectedQori) {
@@ -570,8 +508,7 @@
             if (surahNo != 9 && !(surahNo == 1 && start == 1)) {
                 const firstAudio = (ayatToRender[0] && ayatToRender[0].audio) ? ayatToRender[0].audio[selectedQori] : null;
                 const bismillahAudioUrl = getBismillahAudioUrl(firstAudio, selectedQori);
-                const secureBismillahUrl = bismillahAudioUrl ? bismillahAudioUrl.replace('http://', 'https://') : '';
-                audioPlaylist.push({ src: secureBismillahUrl, nomorAyat: 'bismillah' });
+                audioPlaylist.push({ src: bismillahAudioUrl ? bismillahAudioUrl.replace('http://', 'https://') : '', nomorAyat: 'bismillah' });
             }
             
             ayatToRender.forEach(a => {
@@ -580,10 +517,8 @@
                     const globalNum = getGlobalAyahNumber(parseInt(surahNo), a.nomorAyat);
                     const identifier = QORI_MAP[selectedQori] || 'ar.abdurrahmaansudaas';
                     audioUrl = `https://cdn.islamic.network/quran/audio/128/${identifier}/${globalNum}.mp3`;
-                } else {
-                    audioUrl = audioUrl.replace('http://', 'https://');
                 }
-                audioPlaylist.push({ src: audioUrl, nomorAyat: a.nomorAyat });
+                audioPlaylist.push({ src: audioUrl.replace('http://', 'https://'), nomorAyat: a.nomorAyat });
             });
             
             currentAudioIndex = 0;
@@ -598,8 +533,7 @@
                                `<span class="arab-word" style="color: #ffffff;">بِسْمِ</span> ` +
                                `<span class="arab-word" style="color: #ffffff;">اللَّهِ</span> ` +
                                `<span class="arab-word" style="color: #ffffff;">الرَّحْمَٰنِ</span> ` +
-                               `<span class="arab-word" style="color: #ffffff;">الرَّحِيمِ</span>` +
-                               `</div>`;
+                               `<span class="arab-word" style="color: #ffffff;">الرَّحِيمِ</span></div>`;
                 htmlContent += `<div class="overlay-latin">Bismillāhir-raḥmānir-raḥīm(i)</div>`;
                 if (showIndo) htmlContent += `<div class="overlay-translation" style="margin-bottom: ${showEng ? '0.5rem' : '1rem'}">Dengan nama Allah Yang Maha Pengasih, Maha Penyayang.</div>`;
                 if (showEng) htmlContent += `<div class="overlay-translation text-gray-300 italic text-[0.9rem]">In the name of Allah, the Entirely Merciful, the Especially Merciful.</div>`;
@@ -629,9 +563,6 @@
             overlayContainer.innerHTML = htmlContent;
         }
 
-        /* =========================================================================
-           6. AUDIO ENGINE KONTROL & SINKRONISASI 
-           ========================================================================= */
         function updateAudioSource() {
             if(currentSurahDetail && audioPlaylist.length > 0) {
                 const selectedQori = qoriSelect.value;
@@ -657,64 +588,66 @@
                     audioPlaylist.push({ src: audioUrl.replace('http://', 'https://'), nomorAyat: a.nomorAyat });
                 });
 
-                isPlaylistLoaded = false; // Pastikan status di-reset saat ganti qori
-                if (isPlaying) resetAudioPlayer();
+                isPlaylistLoaded = false;
+                if (!audioPlayer.paused) resetAudioPlayer();
             }
         }
 
+        /* =========================================================================
+           3. PEMUTARAN AUDIO BERBASIS INTERAKSI MURNI (ANTI BLOKIR)
+           ========================================================================= */
         function togglePlay() {
             if (audioPlaylist.length === 0) { showToast("Tampilkan ayat terlebih dahulu", "info"); return; }
             
-            if (isPlaying) {
+            if (!audioPlayer.paused) {
                 audioPlayer.pause(); 
-                isPlaying = false; 
+                isPlaying = false;
                 updatePlayButtonIcon(false);
                 releaseWakeLock();
             } else {
                 requestWakeLock();
                 isPlaying = true;
                 
+                // Set data murni hanya saat klik pertama kali
                 if (!isPlaylistLoaded) {
+                     const track = audioPlaylist[currentAudioIndex];
+                     if (track) audioPlayer.src = track.src;
                      isPlaylistLoaded = true;
-                     playAyatTrack(currentAudioIndex);
-                } else {
-                     const promise = audioPlayer.play();
-                     if (promise !== undefined) {
-                         promise.catch(e => {
-                             console.warn("Resume ditolak browser:", e);
-                             showToast("Sentuh tombol Play kembali.", "error");
-                             isPlaying = false;
-                             updatePlayButtonIcon(false);
-                         });
-                     }
                 }
+                
+                // Panggil play() LANGSUNG tersinkron dengan klik Pengguna
+                const playPromise = audioPlayer.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.warn("Browser menolak autoplay:", error);
+                        isPlaying = false;
+                        updatePlayButtonIcon(false);
+                        showToast("Ketuk tombol Play sekali lagi.", "info");
+                    });
+                }
+                updateVisualsForCurrentTrack();
             }
         }
 
-        function playAyatTrack(index) {
-            if (index >= audioPlaylist.length) { resetAudioPlayer(); return; }
-
-            const currentTrack = audioPlaylist[index];
-            if (!currentTrack || !currentTrack.src) {
-                currentAudioIndex++;
-                playAyatTrack(currentAudioIndex);
-                return;
+        // Auto-next diizinkan browser karena konteks sesi audio sudah terbuka dari klik pertama
+        audioPlayer.addEventListener('ended', () => {
+            currentAudioIndex++; 
+            if (currentAudioIndex >= audioPlaylist.length) { 
+                resetAudioPlayer(); 
+                return; 
             }
-            
-            audioPlayer.src = currentTrack.src;
-            // DIBUANG: audioPlayer.load(); -> Pemanggilan load() sebelum play() sering membatalkan koneksi secara paksa di mobile
-            
-            const playPromise = audioPlayer.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(error => {
-                    console.warn("Track ditolak:", error);
-                    isPlaying = false;
-                    updatePlayButtonIcon(false);
-                    showToast("Browser memblokir audio. Sentuh Play manual.", "info");
-                });
+            const nextTrack = audioPlaylist[currentAudioIndex];
+            if (nextTrack) {
+                audioPlayer.src = nextTrack.src;
+                audioPlayer.play().catch(e => console.warn("Auto-next dicekal:", e));
+                updateVisualsForCurrentTrack();
             }
+        });
 
-            // RESET VISUAL
+        function updateVisualsForCurrentTrack() {
+            const currentTrack = audioPlaylist[currentAudioIndex];
+            if(!currentTrack) return;
+
             document.querySelectorAll('.ayat-wrapper').forEach(el => {
                 el.classList.remove('flex'); el.classList.add('hidden');
                 el.querySelectorAll('.arab-word').forEach(w => w.style.color = '#ffffff');
@@ -725,10 +658,6 @@
                 activeElement.classList.remove('hidden'); activeElement.classList.add('flex');
             }
         }
-
-        audioPlayer.addEventListener('ended', () => {
-            currentAudioIndex++; playAyatTrack(currentAudioIndex);
-        });
 
         audioPlayer.addEventListener('timeupdate', () => {
             if (audioPlayer.duration) {
