@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuranOverlay AI - Premium Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Menambahkan Library Howler.js (Industri Standar untuk Web Audio) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -97,9 +99,8 @@
     </style>
 </head>
 <body class="min-h-screen flex justify-center pb-10">
-    
-    <!-- ELEMEN FISIK AUDIO: Mengandalkan sifat alami HTML5 -->
-    <audio id="core-audio-player" playsinline></audio>
+
+    <!-- Tag HTML Audio dihapus, kontrol diambil alih sepenuhnya oleh Howler.js -->
 
     <div id="toast-container"></div>
 
@@ -319,7 +320,7 @@
         }
 
         /* =========================================================================
-           2. AUDIO ENGINE & STATE MANAJEMEN (STANDAR HTML5 MURNI)
+           2. AUDIO ENGINE & STATE MANAJEMEN (HOWLER.JS INTEGRATION)
            ========================================================================= */
         let surahDataList = LOCAL_SURAH_META; 
         let currentSurahDetail = null;
@@ -329,9 +330,9 @@
         let currentAudioIndex = 0;
         let isPlaying = false;
         let wakeLock = null;
-        let isPlaylistLoaded = false;
         
-        const audioPlayer = document.getElementById('core-audio-player');
+        let currentHowl = null; // Instansi Howler.js yang sedang berjalan
+        let progressInterval = null; // Timer untuk sinkronisasi teks dan durasi
         
         const QORI_MAP = {
             '01': 'ar.abdullahbasfar', '02': 'ar.hudhaify', '03': 'ar.abdurrahmaansudaas',
@@ -343,17 +344,6 @@
             for (let i = 0; i < surahNum - 1; i++) { globalIndex += LOCAL_SURAH_META[i].jumlahAyat; }
             return globalIndex + ayatNum;
         }
-
-        // Murni Indikator UI (Tidak ada intervensi koneksi)
-        audioPlayer.addEventListener('waiting', () => { if (isPlaying) updatePlayButtonIcon('buffer'); });
-        audioPlayer.addEventListener('playing', () => { updatePlayButtonIcon(true); isPlaying = true; });
-        audioPlayer.addEventListener('pause', () => { updatePlayButtonIcon(false); isPlaying = false; });
-        audioPlayer.addEventListener('error', (e) => { 
-            console.warn("Audio Network Error");
-            showToast("Gagal memuat. Pastikan koneksi stabil & ketuk Play lagi.", "error");
-            updatePlayButtonIcon(false);
-            isPlaying = false;
-        });
 
         // Kontrol UI Dasar
         const surahSelect = document.getElementById('surah-select');
@@ -476,7 +466,6 @@
                 }
                 
                 buildOverlayAndAudio(surahNo, start, end, showEng);
-                isPlaylistLoaded = false;
                 skeletonLoader.classList.add('hidden');
                 overlayContainer.classList.remove('hidden');
 
@@ -588,61 +577,134 @@
                     audioPlaylist.push({ src: audioUrl.replace('http://', 'https://'), nomorAyat: a.nomorAyat });
                 });
 
-                isPlaylistLoaded = false;
-                if (!audioPlayer.paused) resetAudioPlayer();
+                resetAudioPlayer();
             }
         }
 
         /* =========================================================================
-           3. PEMUTARAN AUDIO BERBASIS INTERAKSI MURNI (ANTI BLOKIR)
+           3. PEMUTARAN AUDIO MENGGUNAKAN HOWLER.JS (PROFESSIONAL GRADE)
            ========================================================================= */
         function togglePlay() {
             if (audioPlaylist.length === 0) { showToast("Tampilkan ayat terlebih dahulu", "info"); return; }
             
-            if (!audioPlayer.paused) {
-                audioPlayer.pause(); 
-                isPlaying = false;
-                updatePlayButtonIcon(false);
-                releaseWakeLock();
+            if (isPlaying) {
+                if (currentHowl) currentHowl.pause();
             } else {
                 requestWakeLock();
-                isPlaying = true;
-                
-                // Set data murni hanya saat klik pertama kali
-                if (!isPlaylistLoaded) {
-                     const track = audioPlaylist[currentAudioIndex];
-                     if (track) audioPlayer.src = track.src;
-                     isPlaylistLoaded = true;
+                if (!currentHowl) {
+                    playAyatTrack(currentAudioIndex);
+                } else {
+                    currentHowl.play();
                 }
-                
-                // Panggil play() LANGSUNG tersinkron dengan klik Pengguna
-                const playPromise = audioPlayer.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch(error => {
-                        console.warn("Browser menolak autoplay:", error);
-                        isPlaying = false;
-                        updatePlayButtonIcon(false);
-                        showToast("Ketuk tombol Play sekali lagi.", "info");
-                    });
-                }
-                updateVisualsForCurrentTrack();
             }
         }
 
-        // Auto-next diizinkan browser karena konteks sesi audio sudah terbuka dari klik pertama
-        audioPlayer.addEventListener('ended', () => {
-            currentAudioIndex++; 
-            if (currentAudioIndex >= audioPlaylist.length) { 
+        function playAyatTrack(index) {
+            if (index >= audioPlaylist.length) { 
                 resetAudioPlayer(); 
                 return; 
             }
-            const nextTrack = audioPlaylist[currentAudioIndex];
-            if (nextTrack) {
-                audioPlayer.src = nextTrack.src;
-                audioPlayer.play().catch(e => console.warn("Auto-next dicekal:", e));
-                updateVisualsForCurrentTrack();
+
+            const track = audioPlaylist[index];
+            if (!track || !track.src) {
+                currentAudioIndex++;
+                playAyatTrack(currentAudioIndex);
+                return;
             }
-        });
+
+            // Hancurkan instansi sebelumnya agar memori bersih
+            if (currentHowl) {
+                currentHowl.unload();
+            }
+
+            updatePlayButtonIcon('buffer'); // Set ke status loading
+
+            // Inisialisasi Howler
+            currentHowl = new Howl({
+                src: [track.src],
+                html5: true, // WAJIB untuk bypass CORS di stream CDN
+                preload: true,
+                onplay: function() {
+                    isPlaying = true;
+                    updatePlayButtonIcon(true);
+                    updateVisualsForCurrentTrack();
+                    startProgressTracker();
+                },
+                onpause: function() {
+                    isPlaying = false;
+                    updatePlayButtonIcon(false);
+                    stopProgressTracker();
+                    releaseWakeLock();
+                },
+                onend: function() {
+                    stopProgressTracker();
+                    currentAudioIndex++;
+                    playAyatTrack(currentAudioIndex); // Howler menangani auto-next dengan mulus
+                },
+                onloaderror: function(id, err) {
+                    console.warn("Howler Load Error:", err);
+                    updatePlayButtonIcon(false);
+                    isPlaying = false;
+                    showToast("Gagal memuat ayat. Jaringan bermasalah.", "error");
+                },
+                onplayerror: function(id, err) {
+                    console.warn("Autoplay diblokir browser:", err);
+                    // Keajaiban Howler: Jika browser memblokir, ia menunggu interaksi pengguna selanjutnya untuk memutar!
+                    currentHowl.once('unlock', function() {
+                        currentHowl.play();
+                    });
+                    isPlaying = false;
+                    updatePlayButtonIcon(false);
+                    showToast("Ketuk tombol Play lagi untuk mengizinkan audio.", "info");
+                }
+            });
+
+            currentHowl.play();
+        }
+
+        function startProgressTracker() {
+            if (progressInterval) clearInterval(progressInterval);
+            progressInterval = setInterval(() => {
+                if (currentHowl && currentHowl.playing()) {
+                    const seek = currentHowl.seek();
+                    const duration = currentHowl.duration();
+                    
+                    if (typeof seek === 'number' && typeof duration === 'number' && duration > 0) {
+                        const progressPercent = (seek / duration) * 100;
+                        document.getElementById('audio-progress').style.width = `${progressPercent}%`;
+                        
+                        const mins = Math.floor(seek / 60);
+                        const secs = Math.floor(seek % 60);
+                        document.getElementById('audio-time').innerText = `${mins}:${secs.toString().padStart(2, '0')}`;
+
+                        // Sinkronisasi Warna Teks Arab
+                        const activeTrack = audioPlaylist[currentAudioIndex];
+                        if (activeTrack) {
+                            const activeWrapper = document.getElementById(`ayat-wrapper-${activeTrack.nomorAyat}`);
+                            if (activeWrapper) {
+                                const arabicTexts = activeWrapper.querySelectorAll('.overlay-arabic');
+                                arabicTexts.forEach(txt => {
+                                    const words = txt.querySelectorAll('.arab-word');
+                                    if(words.length > 0) {
+                                        const activeWordCount = Math.ceil((progressPercent / 100) * words.length);
+                                        words.forEach((word, idx) => {
+                                            word.style.color = idx < activeWordCount ? '#fbbf24' : '#ffffff';
+                                        });
+                                    }
+                                });
+                            }
+                        }
+                    }
+                }
+            }, 100); // Update setiap 100ms agar super mulus
+        }
+
+        function stopProgressTracker() {
+            if (progressInterval) {
+                clearInterval(progressInterval);
+                progressInterval = null;
+            }
+        }
 
         function updateVisualsForCurrentTrack() {
             const currentTrack = audioPlaylist[currentAudioIndex];
@@ -659,40 +721,18 @@
             }
         }
 
-        audioPlayer.addEventListener('timeupdate', () => {
-            if (audioPlayer.duration) {
-                const progressPercent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
-                document.getElementById('audio-progress').style.width = `${progressPercent}%`;
-                
-                const mins = Math.floor(audioPlayer.currentTime / 60);
-                const secs = Math.floor(audioPlayer.currentTime % 60);
-                document.getElementById('audio-time').innerText = `${mins}:${secs.toString().padStart(2, '0')}`;
-
-                const activeTrack = audioPlaylist[currentAudioIndex];
-                if (activeTrack) {
-                    const activeWrapper = document.getElementById(`ayat-wrapper-${activeTrack.nomorAyat}`);
-                    if (activeWrapper) {
-                        const arabicTexts = activeWrapper.querySelectorAll('.overlay-arabic');
-                        arabicTexts.forEach(txt => {
-                            const words = txt.querySelectorAll('.arab-word');
-                            if(words.length > 0) {
-                                const activeWordCount = Math.ceil((progressPercent / 100) * words.length);
-                                words.forEach((word, index) => {
-                                    word.style.color = index < activeWordCount ? '#fbbf24' : '#ffffff';
-                                });
-                            }
-                        });
-                    }
-                }
-            }
-        });
-
         function resetAudioPlayer() {
-            audioPlayer.pause(); 
+            if (currentHowl) {
+                currentHowl.stop();
+                currentHowl.unload();
+                currentHowl = null;
+            }
             isPlaying = false; 
             currentAudioIndex = 0; 
-            isPlaylistLoaded = false;
-            updatePlayButtonIcon(false); releaseWakeLock();
+            stopProgressTracker();
+            updatePlayButtonIcon(false); 
+            releaseWakeLock();
+            
             document.getElementById('audio-progress').style.width = '0%';
             document.getElementById('audio-time').innerText = '0:00';
             
