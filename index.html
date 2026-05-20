@@ -97,6 +97,11 @@
     </style>
 </head>
 <body class="min-h-screen flex justify-center pb-10">
+    
+    <!-- ELEMEN FISIK AUDIO: Rahasia jitu anti-blokir browser -->
+    <audio id="core-audio-player" playsinline></audio>
+    <!-- Preloader dihapus karena sering memicu limit koneksi CDN pada Mobile -->
+
     <div id="toast-container"></div>
 
     <div class="w-full max-w-[400px] px-4 pt-6 space-y-6">
@@ -233,7 +238,9 @@
         /* =========================================================================
            1. SISTEM INTI: KEAMANAN, CACHE LRU, & MANAJEMEN STATE LOKAL
            ========================================================================= */
-        window.addEventListener('error', function(e) { e.preventDefault(); });
+        // Menangkap error agar tidak merusak UI, namun tetap log ke console
+        window.addEventListener('error', function(e) { console.warn("Caught error:", e.message); });
+        window.addEventListener('unhandledrejection', function(e) { console.warn("Unhandled promise:", e.reason); });
 
         function showToast(message, type = 'info') {
             const container = document.getElementById('toast-container');
@@ -249,14 +256,11 @@
                 localStorage.setItem(key, value);
             } catch (e) {
                 if (e.name === 'QuotaExceededError' || e.code === 22) {
-                    console.warn("Storage penuh! Membersihkan cache lama...");
                     for (let i = localStorage.length - 1; i >= 0; i--) {
                         const k = localStorage.key(i);
-                        if (k && k.startsWith('QO_DATA_')) {
-                            localStorage.removeItem(k);
-                        }
+                        if (k && k.startsWith('QO_DATA_')) { localStorage.removeItem(k); }
                     }
-                    try { localStorage.setItem(key, value); } catch(err) { console.error(err); }
+                    try { localStorage.setItem(key, value); } catch(err) {}
                 }
             }
         }
@@ -339,7 +343,7 @@
         }
 
         /* =========================================================================
-           3. VARIABEL & INISIALISASI AUDIO ENGINE MODERN (ANTI-BLOKIR)
+           3. AUDIO ENGINE PALING JITU (PHYSICAL DOM & SILENT UNLOCK)
            ========================================================================= */
         let surahDataList = LOCAL_SURAH_META; 
         let currentSurahDetail = null;
@@ -349,17 +353,11 @@
         let currentAudioIndex = 0;
         let isPlaying = false;
         let wakeLock = null;
-        let audioUnlocked = false;
-        let audioCtx = null;
-
-        // Inisialisasi Audio Player Utama & Preloader (CORS Aman)
-        let audioPlayer = new Audio();
-        // HAPUS crossOrigin = "anonymous", ini penyebab utama blokir CDN!
+        let isPlaylistLoaded = false; // Penanda penting agar audio tidak tumpang tindih
         
-        let preloaderPlayer = new Audio();
-        // HAPUS crossOrigin preloader
-        preloaderPlayer.muted = true; // Preloader tidak boleh berbunyi, hanya menarik data
-
+        // MENGAMBIL ELEMEN FISIK DARI HTML (Anti dibuang memori oleh iOS)
+        const audioPlayer = document.getElementById('core-audio-player');
+        
         const QORI_MAP = {
             '01': 'ar.abdullahbasfar', '02': 'ar.hudhaify', '03': 'ar.abdurrahmaansudaas',
             '04': 'ar.shaatree', '05': 'ar.alafasy'
@@ -371,167 +369,30 @@
             return globalIndex + ayatNum;
         }
 
-        /* --- MAGIC UNLOCKER: Menjebol Blokir Autoplay Browser HP & PC --- */
-        function initAudioEngine() {
-            if (audioUnlocked) return;
-            try {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                if (!audioCtx) audioCtx = new AudioContext();
-                
-                if (audioCtx.state === 'suspended') {
-                    audioCtx.resume().then(() => {
-                        console.log("AudioContext resumed successfully.");
-                    }).catch(e => console.log("Abaikan error resume", e)); // Tambahkan Catch agar tidak fatal
-                }
-                
-                // Memicu silence base64 audio play agar browser percaya user berinteraksi
-                // Menggunakan Web Audio API untuk silence alih-alih elemen Audio HTML5 yang sering diblokir
-                const buffer = audioCtx.createBuffer(1, 1, 22050); // 1 detik silence
-                const source = audioCtx.createBufferSource();
-                source.buffer = buffer;
-                source.connect(audioCtx.destination);
-                source.onended = () => {
-                    audioUnlocked = true;
-                    console.log("Audio Engine Berhasil Terbuka dengan Web Audio API!");
-                    
-                    // Force load pada elemen Audio HTML5 utama setelah context aktif
-                    audioPlayer.load();
-                };
-                source.start(0);
-
-                // Bersihkan event listener jika sudah jebol
-                ['touchstart', 'touchend', 'click', 'keydown'].forEach(evt => document.removeEventListener(evt, unlockAudioEngine));
-            } catch (e) {
-                console.log("Web Audio API Fallback", e);
-                // Fallback ke metode lama jika Web Audio gagal
-                try {
-                    const silentWav = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
-                    const unlockPlayer = new Audio(silentWav);
-                    unlockPlayer.play().then(() => {
-                        audioUnlocked = true;
-                        console.log("Audio Engine Berhasil Terbuka (Fallback)!");
-                        audioPlayer.load();
-                    }).catch(err => console.warn("Fallback unlock failed", err));
-                } catch(err2) {
-                     audioUnlocked = true;
-                }
-            }
-        }
-        
-        // Pancing unlocker pada SEMUA interaksi awal
-        function unlockAudioEngine() {
-            initAudioEngine();
-        }
-        
-        ['touchstart', 'touchend', 'click', 'keydown', 'scroll'].forEach(evt => document.addEventListener(evt, unlockAudioEngine, { once: true, passive: true }));
-
-        /* --- MANAJEMEN SIKLUS HIDUP TAB (VISIBILITY API) --- */
-        document.addEventListener("visibilitychange", () => {
-            if (document.visibilityState === 'hidden') {
-                if (isPlaying) {
-                    audioPlayer.pause();
-                    localStorage.setItem('QO_WAS_PLAYING', 'true');
-                }
-            } else {
-                if (localStorage.getItem('QO_WAS_PLAYING') === 'true') {
-                    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-                    audioPlayer.play().catch(e => console.log("Gagal auto-resume", e));
-                    localStorage.removeItem('QO_WAS_PLAYING');
-                }
-            }
-        });
-
-        /* --- SISTEM ANTI STALLED & ERROR RECOVERY --- */
-        let stallCheckTimeout;
-        let audioRetryCount = 0;
+        /* --- NATURAL BUFFERING & GRACEFUL ERROR HANDLING --- */
+        // Dihapus fungsi hack base64 unlocker yang justru membuat bentrok state audio.
+        // Browser modern hanya butuh 1x klik Play dari user secara langsung.
 
         audioPlayer.addEventListener('waiting', () => {
-            updatePlayButtonIcon('buffer'); // Ganti Ikon ke Spinner
-            clearTimeout(stallCheckTimeout);
-            stallCheckTimeout = setTimeout(() => {
-                if (isPlaying) handleAudioError();
-            }, 15000); // UBAH ke 15 detik! Beri waktu browser bernapas saat jaringan lambat
+            updatePlayButtonIcon('buffer'); 
         });
 
         audioPlayer.addEventListener('playing', () => {
-            updatePlayButtonIcon(true); // Ganti Ikon ke Pause
-            clearTimeout(stallCheckTimeout);
-            audioRetryCount = 0;
+            updatePlayButtonIcon(true);
         });
 
         audioPlayer.addEventListener('pause', () => {
-            if (!isPlaying) updatePlayButtonIcon(false); // Ganti Ikon ke Play
+            if (!isPlaying) updatePlayButtonIcon(false);
         });
 
-        audioPlayer.onerror = () => { if (isPlaying) handleAudioError(); };
-
-        function handleAudioError() {
-            if (audioRetryCount < 2) {
-                audioRetryCount++;
-                const currentTrack = audioPlaylist[currentAudioIndex];
-                if (currentTrack && currentTrack.src) {
-                    showToast("Koneksi tidak stabil, memulihkan audio...", "info");
-                    
-                    // Pastikan AudioContext aktif sebelum mencoba play lagi
-                    if (audioCtx && audioCtx.state === 'suspended') {
-                         audioCtx.resume();
-                    }
-                    
-                    const selectedQori = qoriSelect ? qoriSelect.value : '03';
-                    const identifier = QORI_MAP[selectedQori] || 'ar.abdurrahmaansudaas';
-                    let fallbackUrl = '';
-                    
-                    if (currentTrack.nomorAyat === 'bismillah') {
-                        fallbackUrl = `https://cdn.islamic.network/quran/audio/128/${identifier}/1.mp3`;
-                    } else {
-                        const surahNo = parseInt(surahSelect.value);
-                        const globalNum = getGlobalAyahNumber(surahNo, currentTrack.nomorAyat);
-                        fallbackUrl = `https://cdn.islamic.network/quran/audio/128/${identifier}/${globalNum}.mp3`;
-                    }
-                    currentTrack.src = fallbackUrl;
-                    
-                    const currTime = audioPlayer.currentTime;
-                    // Hapus trik parameter ?retry karena beberapa CDN memblokir query params sehingga file terdeteksi sebagai "unsupported source" (403/404 HTML)
-                    audioPlayer.src = currentTrack.src;
-                    audioPlayer.load();
-                    
-                    if (currTime > 0) {
-                        try {
-                            if (audioPlayer.readyState >= 1) {
-                                audioPlayer.currentTime = currTime;
-                            } else {
-                                audioPlayer.addEventListener('loadedmetadata', function onMetadata() {
-                                    try { audioPlayer.currentTime = currTime; } catch(e) {}
-                                    audioPlayer.removeEventListener('loadedmetadata', onMetadata);
-                                });
-                            }
-                        } catch (err) {
-                            console.warn("Gagal set waktu:", err);
-                        }
-                    }
-                    
-                    // Gunakan promise berantai dan timeout untuk bypass blokir DOMException
-                    const playPromise = audioPlayer.play();
-                    if (playPromise !== undefined) {
-                        playPromise.catch(error => {
-                            console.warn("Auto-recovery play failed:", error);
-                            // Jangan panggil initAudioEngine() berulang di sini agar tidak loop
-                            setTimeout(() => {
-                                if (audioPlayer.src && !audioPlayer.src.endsWith('/')) {
-                                    const retryPlay = audioPlayer.play();
-                                    if (retryPlay !== undefined) {
-                                        retryPlay.catch(e => console.error("Final recovery failed", e));
-                                    }
-                                }
-                            }, 1000);
-                        });
-                    }
-                }
-            } else {
-                showToast("Audio terhenti. Silakan tekan Play ulang.", "error");
+        // Error sejati (bukan loading lambat)
+        audioPlayer.onerror = (e) => { 
+            if (isPlaying) {
+                console.warn("Audio Error Event", e);
+                showToast("Gagal memuat audio. Sentuh Play kembali untuk mencoba.", "error");
                 resetAudioPlayer();
             }
-        }
+        };
 
         const surahSelect = document.getElementById('surah-select');
         const ayatStartInput = document.getElementById('ayat-start');
@@ -675,6 +536,7 @@
                 }
                 
                 buildOverlayAndAudio(surahNo, start, end, showEng);
+                isPlaylistLoaded = false; // Reset status playlist setiap kali ayat baru dimuat
                 skeletonLoader.classList.add('hidden');
                 overlayContainer.classList.remove('hidden');
 
@@ -768,7 +630,7 @@
         }
 
         /* =========================================================================
-           6. AUDIO ENGINE KONTROL & SINKRONISASI INSTAN ZERO DELAY
+           6. AUDIO ENGINE KONTROL & SINKRONISASI 
            ========================================================================= */
         function updateAudioSource() {
             if(currentSurahDetail && audioPlaylist.length > 0) {
@@ -795,6 +657,7 @@
                     audioPlaylist.push({ src: audioUrl.replace('http://', 'https://'), nomorAyat: a.nomorAyat });
                 });
 
+                isPlaylistLoaded = false; // Pastikan status di-reset saat ganti qori
                 if (isPlaying) resetAudioPlayer();
             }
         }
@@ -802,9 +665,6 @@
         function togglePlay() {
             if (audioPlaylist.length === 0) { showToast("Tampilkan ayat terlebih dahulu", "info"); return; }
             
-            // Jaminan Unlocker API Audio Jalan saat Play Ditekan
-            initAudioEngine();
-
             if (isPlaying) {
                 audioPlayer.pause(); 
                 isPlaying = false; 
@@ -812,27 +672,22 @@
                 releaseWakeLock();
             } else {
                 requestWakeLock();
+                isPlaying = true;
                 
-                // Eksekusi Play dalam Promise handling yang ketat
-                let playAction;
-                if (!audioPlayer.src || audioPlayer.src === window.location.href || audioPlayer.src.endsWith('/')) {
-                     playAction = () => playAyatTrack(currentAudioIndex);
+                if (!isPlaylistLoaded) {
+                     isPlaylistLoaded = true;
+                     playAyatTrack(currentAudioIndex);
                 } else {
-                     playAction = () => {
-                         const promise = audioPlayer.play();
-                         if (promise !== undefined) {
-                             promise.catch(e => {
-                                 console.warn("Play paused/blocked", e);
-                                 // Jika diblokir, paksa load ulang dan coba play setelah jeda
-                                 audioPlayer.load();
-                                 setTimeout(() => audioPlayer.play().catch(err => console.error(err)), 100);
-                             });
-                         }
-                     };
+                     const promise = audioPlayer.play();
+                     if (promise !== undefined) {
+                         promise.catch(e => {
+                             console.warn("Resume ditolak browser:", e);
+                             showToast("Sentuh tombol Play kembali.", "error");
+                             isPlaying = false;
+                             updatePlayButtonIcon(false);
+                         });
+                     }
                 }
-                
-                playAction();
-                isPlaying = true; 
             }
         }
 
@@ -847,23 +702,19 @@
             }
             
             audioPlayer.src = currentTrack.src;
-            audioPlayer.load(); 
+            // DIBUANG: audioPlayer.load(); -> Pemanggilan load() sebelum play() sering membatalkan koneksi secara paksa di mobile
             
             const playPromise = audioPlayer.play();
             if (playPromise !== undefined) {
                 playPromise.catch(error => {
-                    console.warn("Track play blocked:", error);
-                    // Tindakan penyelamatan jika autoplay diblokir saat ganti track
-                    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-                    setTimeout(() => {
-                        if (audioPlayer.src && !audioPlayer.src.endsWith('/')) {
-                            audioPlayer.play().catch(e => console.error("Force play failed", e));
-                        }
-                    }, 150);
+                    console.warn("Track ditolak:", error);
+                    isPlaying = false;
+                    updatePlayButtonIcon(false);
+                    showToast("Browser memblokir audio. Sentuh Play manual.", "info");
                 });
             }
 
-            // RESET VISUAL: Reset warna kata dan sembunyikan ayat lain secara instan
+            // RESET VISUAL
             document.querySelectorAll('.ayat-wrapper').forEach(el => {
                 el.classList.remove('flex'); el.classList.add('hidden');
                 el.querySelectorAll('.arab-word').forEach(w => w.style.color = '#ffffff');
@@ -872,16 +723,6 @@
             const activeElement = document.getElementById(`ayat-wrapper-${currentTrack.nomorAyat}`);
             if (activeElement) {
                 activeElement.classList.remove('hidden'); activeElement.classList.add('flex');
-            }
-
-            // ZERO-DELAY PRELOADER: Pre-buffer ayat berikutnya di background
-            if (index + 1 < audioPlaylist.length) {
-                const nextSrc = audioPlaylist[index + 1].src;
-                if (nextSrc) {
-                    preloaderPlayer.src = nextSrc.replace('http://', 'https://');
-                    preloaderPlayer.preload = "auto";
-                    preloaderPlayer.load();
-                }
             }
         }
 
@@ -918,8 +759,10 @@
         });
 
         function resetAudioPlayer() {
-            audioPlayer.pause(); audioPlayer.src = ''; isPlaying = false; 
-            currentAudioIndex = 0; audioRetryCount = 0; 
+            audioPlayer.pause(); 
+            isPlaying = false; 
+            currentAudioIndex = 0; 
+            isPlaylistLoaded = false;
             updatePlayButtonIcon(false); releaseWakeLock();
             document.getElementById('audio-progress').style.width = '0%';
             document.getElementById('audio-time').innerText = '0:00';
@@ -936,13 +779,10 @@
         function updatePlayButtonIcon(status) {
             const btn = document.getElementById('play-btn');
             if (status === 'buffer') {
-                // Ikon Spinner Berputar (Loading/Buffering)
                 btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
             } else if (status === true || status === 'pause') {
-                // Ikon Pause (Berjalan)
                 btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-black" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>`;
             } else {
-                // Ikon Play (Siap Putar)
                 btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-black ml-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>`;
             }
         }
