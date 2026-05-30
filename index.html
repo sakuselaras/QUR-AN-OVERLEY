@@ -853,12 +853,16 @@
 
                 if (state.audioSources && state.audioSources.length > 0) {
                     DOM.audioPlayer.src = state.audioSources[0];
-                    DOM.audioPlayer.load();
+                    // PERBAIKAN SEAMLESS PLAYBACK: Hanya panggil .load() jika pemutaran manual (tidak autoplay)
+                    // Mengubah atribut src otomatis menginisialisasi muatan media, pemanggilan .load() manual menambah latensi reset thread
+                    if (!autoPlay) {
+                        DOM.audioPlayer.load();
+                    }
                 } else {
                     DOM.audioPlayer.removeAttribute('src');
                 }
 
-                // SMART PRELOADER (ANTI-CRASH & MUTED): Melakukan caching asinkron audio ayat berikutnya di latar belakang
+                // SMART PRELOADER (ANTI-CRASH, NO-CORS, INSTANT CACHE): Melakukan caching asinkron audio ayat berikutnya di latar belakang
                 if (idx < state.playlist.length - 1) {
                     try {
                         const nextAyah = state.playlist[idx + 1];
@@ -867,14 +871,18 @@
                         const nextSurahNum = nextIsBismillah ? 1 : sNum;
                         const nextSources = getAudioSources(state.qori, nextSurahNum, nextAyahNum, nextAyah.audio);
                         if (nextSources && nextSources.length > 0) {
-                            const preloader = new Audio();
-                            preloader.muted = true;
-                            preloader.preload = "auto";
-                            preloader.addEventListener('error', () => {
-                                // Gagal preload asinkron dilewati secara diam-diam demi menjaga stabilitas
-                                console.log("Gagal melakukan preload ayat berikutnya, tidak masalah.");
-                            });
-                            preloader.src = nextSources[0];
+                            // Mengunduh secara asinkron dengan mode 'no-cors' agar langsung tersimpan di HTTP Cache peramban tanpa terhalang kebijakan CORS
+                            fetch(nextSources[0], { mode: 'no-cors' })
+                                .then(() => {
+                                    console.log("Preloaded next audio successfully into HTTP cache:", nextSources[0]);
+                                })
+                                .catch(() => {
+                                    // Fallback jika fetch diblokir total oleh kontrol jaringan peramban
+                                    const preloader = new Audio();
+                                    preloader.muted = true;
+                                    preloader.preload = "auto";
+                                    preloader.src = nextSources[0];
+                                });
                         }
                     } catch (e) {
                         console.warn("Sistem preloader dinonaktifkan peramban:", e);
@@ -1033,7 +1041,7 @@
                         state.currentPlaylistIndex = 0; playPlaylistIndex(0, false);
                         stopFakeFullscreen();
                     }
-                }, 500); 
+                }, 150); // Memangkas jeda transisi TTS ke ayat berikutnya agar cepat dan tanggap
             };
 
             utterance.onerror = function(err) {
@@ -1211,14 +1219,13 @@
                 // Memutar ayat selanjutnya secara berantai (autoPlay = true)
                 playPlaylistIndex(state.currentPlaylistIndex + 1, true);
             } else {
-                // Berhenti di akhir playlist surah, reset ke ayat pertama secara elegan dan tunggu play manual
+                // Berhenti di akhir playlist surah, reset ke ayat pertama secara elegan dan tunggu play manual (Toast Notifikasi Dihapus)
                 pauseAudio(); 
                 DOM.progressBar.style.width = `0%`; 
                 DOM.timeDisplay.innerText = `0:00`;
                 state.currentPlaylistIndex = 0; 
                 playPlaylistIndex(0, false);
                 stopFakeFullscreen(); 
-                showToast("Selesai membaca seluruh ayat.");
             }
         });
 
