@@ -2,8 +2,8 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Qur'an Overlay Studio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Qur'an Overlay Studio - Mobile App</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -22,16 +22,17 @@
             --primary: #60a5fa;
             --primary-dark: #3b82f6;
             --surface: #1f2937;
-            --background: #111827;
+            --background: #0b0f19;
             --text: #f9fafb;
             --text-secondary: #9ca3af;
         }
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--background);
+            background-color: #030712;
             color: var(--text);
-            transition: background-color 0.3s, color 0.3s;
+            overflow: hidden;
+            touch-action: manipulation;
         }
 
         .arabic-text {
@@ -39,34 +40,49 @@
             direction: rtl;
         }
 
-        .preview-container {
-            background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), 
-                              linear-gradient(135deg, #ccc 25%, transparent 25%),
-                              linear-gradient(45deg, transparent 75%, #ccc 75%),
-                              linear-gradient(135deg, transparent 75%, #ccc 75%);
-            background-size: 20px 20px;
-            background-position: 0 0, 10px 0, 10px -10px, 0px 10px;
-            background-color: #eee;
+        .phone-frame {
+            width: 100%;
+            max-width: 414px;
+            height: 100vh;
+            max-height: 896px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            border-radius: 0px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--background);
         }
 
-        .dark .preview-container {
-             background-image: linear-gradient(45deg, #374151 25%, transparent 25%), 
+        @media (min-width: 640px) {
+            .phone-frame {
+                border-radius: 48px;
+                border: 12px solid #1f2937;
+                height: 90vh;
+                max-height: 860px;
+            }
+        }
+
+        .preview-container {
+            background-image: linear-gradient(45deg, #374151 25%, transparent 25%), 
                               linear-gradient(135deg, #374151 25%, transparent 25%),
                               linear-gradient(45deg, transparent 75%, #374151 75%),
                               linear-gradient(135deg, transparent 75%, #374151 75%);
-             background-color: #1f2937;
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 0, 10px -10px, 0px 10px;
+            background-color: #1f2937;
         }
 
         .canvas-wrapper {
             position: relative;
             overflow: hidden;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
             transition: all 0.3s ease;
         }
         
-        .ratio-9-16 { aspect-ratio: 9/16; width: 100%; max-width: 360px; margin: 0 auto; }
-        .ratio-1-1 { aspect-ratio: 1/1; width: 100%; max-width: 420px; margin: 0 auto; }
-        .ratio-16-9 { aspect-ratio: 16/9; width: 100%; max-width: 640px; margin: 0 auto; }
+        .ratio-9-16 { aspect-ratio: 9/16; width: 100%; height: 100%; max-height: 480px; margin: 0 auto; }
+        .ratio-1-1 { aspect-ratio: 1/1; width: 100%; height: 100%; max-height: 380px; margin: 0 auto; }
+        .ratio-16-9 { aspect-ratio: 16/9; width: 100%; height: 100%; max-height: 280px; margin: 0 auto; }
 
         .spinner {
             border: 3px solid rgba(255,255,255,0.3);
@@ -83,7 +99,7 @@
         }
 
         .glass-panel {
-            background: rgba(0, 0, 0, 0.75);
+            background: rgba(0, 0, 0, 0.78);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -97,228 +113,292 @@
             transition: all 0.15s ease;
         }
 
-        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+        }
 
         #renderCanvas {
             display: none;
         }
     </style>
 </head>
-<body class="h-screen flex flex-col dark overflow-hidden">
+<body class="h-screen w-screen flex items-center justify-center dark">
 
-    <nav class="bg-[var(--surface)] border-b border-gray-200 dark:border-gray-700 p-4 shadow-sm z-10 flex-shrink-0 flex justify-between items-center transition-colors">
-        <div class="flex items-center gap-3">
-            <div class="bg-blue-500 text-white p-2 rounded-lg">
-                <i class="fa-solid fa-quran text-xl"></i>
-            </div>
-            <div>
-                <h1 class="text-xl font-bold tracking-tight">Qur'an Overlay Studio</h1>
-                <p class="text-[10px] text-gray-500 dark:text-gray-400">CapCut & Social Media Video Generator</p>
-            </div>
-        </div>
-        <div class="flex items-center gap-4">
-            <button id="themeToggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Toggle Theme">
-                <i class="fa-solid fa-moon dark:hidden"></i>
-                <i class="fa-solid fa-sun hidden dark:block text-yellow-400"></i>
-            </button>
-            <button id="btnExport" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-medium transition flex items-center gap-2 shadow-md">
-                <i class="fa-solid fa-download"></i> Export Video
-            </button>
-        </div>
-    </nav>
-
-    <main class="flex-1 flex overflow-hidden">
+    <div class="phone-frame shadow-2xl transition-colors">
         
-        <aside class="w-80 bg-[var(--surface)] border-r border-gray-200 dark:border-gray-700 flex flex-col transition-colors z-10 overflow-y-auto">
-            <div class="p-5 space-y-6">
-                
+        <!-- Mobile Status Bar -->
+        <div class="h-7 bg-[var(--surface)] px-6 flex justify-between items-center text-[11px] font-semibold tracking-wider z-30 select-none border-b border-gray-800/10">
+            <span>9:41</span>
+            <div class="w-20 h-3.5 bg-black rounded-full mx-auto absolute left-1/2 transform -translate-x-1/2 top-1.5 hidden sm:block"></div>
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-signal text-[10px]"></i>
+                <i class="fa-solid fa-wifi text-[10px]"></i>
+                <i class="fa-solid fa-battery-full text-[10px]"></i>
+            </div>
+        </div>
+
+        <!-- App Top Bar -->
+        <header class="bg-[var(--surface)] border-b border-gray-200 dark:border-gray-800 px-4 py-3 z-20 flex justify-between items-center shrink-0">
+            <div class="flex items-center gap-2.5">
+                <div class="bg-blue-500 text-white p-2 rounded-xl shadow-md">
+                    <i class="fa-solid fa-quran text-base"></i>
+                </div>
                 <div>
-                    <h2 class="text-sm font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-3">Cari Ayat</h2>
-                    <div class="space-y-3">
-                        <div>
-                            <label class="block text-xs mb-1">Surah</label>
-                            <select id="surahSelect" class="w-full bg-[var(--background)] border border-gray-300 dark:border-gray-600 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors">
-                                <option value="">Pilih Surah...</option>
-                            </select>
-                        </div>
-                        <div class="flex gap-2">
-                            <div class="flex-1">
-                                <label class="block text-xs mb-1">Dari Ayat</label>
-                                <input type="number" id="ayatStart" min="1" placeholder="1" class="w-full bg-[var(--background)] border border-gray-300 dark:border-gray-600 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors">
-                            </div>
-                            <div class="flex-1">
-                                <label class="block text-xs mb-1">Sampai Ayat</label>
-                                <input type="number" id="ayatEnd" min="1" placeholder="5" class="w-full bg-[var(--background)] border border-gray-300 dark:border-gray-600 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors">
-                            </div>
-                        </div>
-
-                        <div class="flex items-center gap-2 pt-1">
-                            <input type="checkbox" id="chkBismillah" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
-                            <label for="chkBismillah" class="text-xs text-[var(--text-secondary)] select-none">Diawali Basmalah Otomatis</label>
-                        </div>
-
-                        <button id="btnLoadAyat" class="w-full bg-gray-800 dark:bg-gray-100 text-white dark:text-gray-900 py-2 rounded-md font-medium hover:bg-gray-700 dark:hover:bg-white transition flex justify-center items-center gap-2">
-                            <i class="fa-solid fa-search"></i> Muat Ayat
-                        </button>
-                    </div>
-                </div>
-
-                <hr class="border-gray-200 dark:border-gray-700">
-
-                <div>
-                    <h2 class="text-sm font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-3">Desain & Tampilan</h2>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-xs mb-2">Rasio Aspek</label>
-                            <div class="flex bg-[var(--background)] rounded-lg p-1 border border-gray-200 dark:border-gray-700">
-                                <button class="ratio-btn flex-1 py-1.5 text-xs rounded-md font-medium transition active-ratio bg-[var(--surface)] shadow-sm" data-ratio="ratio-9-16">9:16<br><span class="text-[10px] font-normal text-gray-500">TikTok/Reels</span></button>
-                                <button class="ratio-btn flex-1 py-1.5 text-xs rounded-md font-medium transition text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" data-ratio="ratio-1-1">1:1<br><span class="text-[10px] font-normal text-gray-500">Instagram</span></button>
-                                <button class="ratio-btn flex-1 py-1.5 text-xs rounded-md font-medium transition text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" data-ratio="ratio-16-9">16:9<br><span class="text-[10px] font-normal text-gray-500">YouTube</span></button>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs mb-1">Preset Tampilan & Layer</label>
-                            <select id="presetSelect" class="w-full bg-[var(--background)] border border-gray-300 dark:border-gray-600 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors">
-                                <option value="capcut-green">🟢 Chroma Green (Overlay CapCut)</option>
-                                <option value="dark-glass" selected>Dark Glass (Modern Full Screen)</option>
-                                <option value="light-clean">Light Clean (Minimalis)</option>
-                                <option value="gold-luxury">Gold Luxury (Elegan)</option>
-                                <option value="transparent-card">Transparent Card (Full Overlay)</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs mb-1">Gambar Latar (URL)</label>
-                            <input type="text" id="bgImageUrl" placeholder="https://example.com/image.jpg" class="w-full bg-[var(--background)] border border-gray-300 dark:border-gray-600 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors" value="https://images.unsplash.com/photo-1601142634808-38923eb7c560?ixlib=rb-4.0.3&auto=format&fit=crop&w=1080&q=80">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs mb-1">Efek Karaoke Teks</label>
-                            <select id="karaokeMode" class="w-full bg-[var(--background)] border border-gray-300 dark:border-gray-600 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors">
-                                <option value="word">Sorot Per Kata (Word-by-Word Karaoke)</option>
-                                <option value="none">Tanpa Karaoke (Teks Biasa)</option>
-                            </select>
-                        </div>
-                        
-                        <div class="space-y-2">
-                             <div class="flex justify-between items-center">
-                                <label class="text-xs">Ukuran Arab</label>
-                                <input type="range" id="sizeArabic" min="20" max="70" value="40" class="w-32 accent-blue-500">
-                             </div>
-                             <div class="flex justify-between items-center">
-                                <label class="text-xs">Ukuran Terjemahan ID</label>
-                                <input type="range" id="sizeTranslation" min="10" max="30" value="16" class="w-32 accent-blue-500">
-                             </div>
-                             <div class="flex justify-between items-center">
-                                <label class="text-xs">Ukuran Terjemahan EN</label>
-                                <input type="range" id="sizeTranslationEn" min="10" max="30" value="14" class="w-32 accent-blue-500">
-                             </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </aside>
-
-        <section class="flex-1 flex flex-col relative preview-container">
-            
-            <div id="recordingState" class="absolute top-4 right-4 bg-red-600/90 backdrop-blur-sm text-white px-4 py-2 rounded-full text-xs font-bold shadow-2xl flex items-center gap-2.5 hidden z-50 border border-red-400">
-                <div class="w-2.5 h-2.5 rounded-full bg-white animate-ping"></div>
-                <span id="recordingProgressText">Merekam Video...</span>
-            </div>
-
-            <div class="flex-1 flex items-center justify-center p-6 overflow-auto">
-                <!-- Preview Wrapper yang diperbesar memenuhi ruang layar HP -->
-                <div id="previewWrapper" class="canvas-wrapper ratio-9-16 bg-black rounded-2xl flex flex-col justify-center items-center" style="background-image: url('https://images.unsplash.com/photo-1601142634808-38923eb7c560?ixlib=rb-4.0.3&auto=format&fit=crop&w=1080&q=80'); background-size: cover; background-position: center;">
-                    
-                    <div id="overlayContent" class="absolute inset-0 flex flex-col justify-center items-center">
-                        <!-- Full Screen Immersive Card Box -->
-                        <div id="textBox" class="glass-panel w-[92%] h-[82%] rounded-2xl p-6 flex flex-col justify-center items-center text-center transition-all duration-300 shadow-2xl">
-                            
-                            <div id="emptyState" class="text-center text-gray-300 py-10">
-                                <i class="fa-solid fa-book-open text-4xl mb-3 opacity-50"></i>
-                                <p class="text-sm">Pilih surah dan muat ayat<br>untuk melihat pratinjau.</p>
-                            </div>
-
-                            <div id="quranDisplay" class="hidden flex flex-col items-center justify-center w-full h-full space-y-4">
-                                <div id="previewSurahInfo" class="text-[11px] uppercase tracking-[0.25em] text-blue-300 font-bold opacity-90">
-                                    Al-Fatihah • Ayat 1
-                                </div>
-                                <div id="previewArabic" class="arabic-text text-white font-normal leading-relaxed text-[40px] transition-all my-2" style="line-height: 1.9;">
-                                    بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
-                                </div>
-                                <div class="w-16 h-[1.5px] bg-white/40 rounded-full my-1"></div>
-                                <div id="previewTranslation" class="text-gray-100 text-[16px] font-medium leading-relaxed px-2">
-                                    Dengan menyebut nama Allah Yang Maha Pengasih lagi Maha Penyayang.
-                                </div>
-                                <div id="previewTranslationEn" class="text-gray-300 text-[14px] font-normal italic leading-relaxed px-2">
-                                    In the name of Allah, the Entirely Merciful, the Especially Merciful.
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="loadingOverlay" class="absolute inset-0 bg-gray-900/80 backdrop-blur-sm flex flex-col items-center justify-center hidden z-20">
-                        <div class="spinner mb-3"></div>
-                        <p class="text-xs text-white" id="loadingText">Memuat data dari API...</p>
-                    </div>
+                    <h1 class="text-sm font-bold tracking-tight">Qur'an Overlay</h1>
+                    <p class="text-[9px] text-gray-500 dark:text-gray-400">Mobile Video Studio</p>
                 </div>
             </div>
-
-            <div class="h-20 bg-[var(--surface)] border-t border-gray-200 dark:border-gray-700 flex items-center px-6 gap-4 z-10 transition-colors shrink-0">
-                <button id="btnPlayPause" class="w-12 h-12 rounded-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                    <i class="fa-solid fa-play ml-1" id="playIcon"></i>
+            <div class="flex items-center gap-2">
+                <button id="themeToggle" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition" title="Ganti Tema">
+                    <i class="fa-solid fa-moon dark:hidden text-xs"></i>
+                    <i class="fa-solid fa-sun hidden dark:block text-yellow-400 text-xs"></i>
                 </button>
+                <button id="btnExportHeader" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-xl text-xs font-medium transition flex items-center gap-1.5 shadow-md">
+                    <i class="fa-solid fa-download"></i> Export
+                </button>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-hidden relative flex flex-col">
+            
+            <!-- TAB 1: SURAH & AYAT -->
+            <div id="tabSurah" class="tab-content active flex-1 overflow-y-auto p-4 space-y-4">
+                <div class="bg-[var(--surface)] rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-800 space-y-3">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]"><i class="fa-solid fa-book mr-1 text-blue-500"></i> Pilih Surah & Ayat</h2>
+                    
+                    <div>
+                        <label class="block text-[11px] font-medium mb-1">Surah Al-Qur'an</label>
+                        <select id="surahSelect" class="w-full bg-[var(--background)] border border-gray-300 dark:border-gray-700 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-blue-500 outline-none transition">
+                            <option value="">Memuat daftar surah...</option>
+                        </select>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <div class="flex-1">
+                            <label class="block text-[11px] font-medium mb-1">Dari Ayat</label>
+                            <input type="number" id="ayatStart" min="1" value="1" class="w-full bg-[var(--background)] border border-gray-300 dark:border-gray-700 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-[11px] font-medium mb-1">Sampai Ayat</label>
+                            <input type="number" id="ayatEnd" min="1" value="3" class="w-full bg-[var(--background)] border border-gray-300 dark:border-gray-700 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 pt-1">
+                        <input type="checkbox" id="chkBismillah" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                        <label for="chkBismillah" class="text-xs text-[var(--text-secondary)] select-none">Basmalah Otomatis di Awal</label>
+                    </div>
+
+                    <button id="btnLoadAyat" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold text-xs transition shadow-md flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-cloud-arrow-down"></i> Muat Data & Audio Cepat
+                    </button>
+                </div>
+
+                <!-- NEW: Audio Source & Copyright-Free Options -->
+                <div class="bg-[var(--surface)] rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-800 space-y-3">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]"><i class="fa-solid fa-volume-high mr-1 text-blue-500"></i> Pengaturan Audio & Anti-Copyright</h2>
+                    
+                    <div>
+                        <label class="block text-[11px] font-medium mb-1">Pilih Qari / Sumber Audio</label>
+                        <select id="qariSelect" class="w-full bg-[var(--background)] border border-gray-300 dark:border-gray-700 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="ar.alafasy">Mishary Rashid Alafasy (Standar)</option>
+                            <option value="ar.abdulrahmanalsudais">Abdul Rahman Al-Sudais</option>
+                            <option value="ar.minshawi">Mohamed Siddiq El-Minshawi</option>
+                            <option value="ar.mahermuaiqly">Maher Al Muaiqly</option>
+                            <option value="custom">📁 Upload Audio MP3 Sendiri (Bebas Copyright)</option>
+                        </select>
+                    </div>
+
+                    <div id="customAudioContainer" class="hidden space-y-1.5 pt-1">
+                        <label class="block text-[11px] font-medium text-blue-400">Unggah File MP3 Tilawah Anda</label>
+                        <input type="file" id="customAudioFile" accept="audio/mp3,audio/wav" class="w-full text-xs text-gray-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer">
+                        <p class="text-[10px] text-gray-400">Gunakan audio buatan sendiri atau audio bebas hak cipta agar lolos sensor platform.</p>
+                    </div>
+                </div>
+
+                <div class="bg-[var(--surface)] rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-800 space-y-2">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]"><i class="fa-solid fa-circle-info mr-1 text-blue-500"></i> Panduan Singkat</h3>
+                    <p class="text-[11px] text-[var(--text-secondary)] leading-relaxed">
+                        1. Pilih Surah & rentang ayat.<br>
+                        2. Sesuaikan gaya tampilan & karaoke.<br>
+                        3. Putar & pratinjau di Tab Studio.<br>
+                        4. Klik Export untuk mengunduh video WebM HD.
+                    </p>
+                </div>
+            </div>
+
+            <!-- TAB 2: STUDIO PREVIEW & PLAYER -->
+            <div id="tabStudio" class="tab-content flex-1 overflow-hidden flex flex-col preview-container relative">
                 
-                <div class="flex-1 flex flex-col justify-center">
-                    <div class="flex justify-between text-xs mb-1 font-medium text-[var(--text-secondary)]">
-                        <span id="currentTimeDisplay">0:00</span>
-                        <span id="trackInfo">Audio belum dimuat</span>
-                        <span id="durationDisplay">0:00</span>
-                    </div>
-                    <div class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden cursor-pointer relative" id="progressBarContainer">
-                        <div id="progressBar" class="h-full bg-blue-500 w-0 transition-all duration-100"></div>
+                <!-- Recording Overlay Indicator -->
+                <div id="recordingState" class="absolute top-3 left-1/2 transform -translate-x-1/2 bg-red-600/90 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-[10px] font-bold shadow-xl flex items-center gap-2 hidden z-50 border border-red-400">
+                    <div class="w-2 h-2 rounded-full bg-white animate-ping"></div>
+                    <span id="recordingProgressText">Merekam Video...</span>
+                </div>
+
+                <!-- Preview Area -->
+                <div class="flex-1 flex items-center justify-center p-3 overflow-hidden">
+                    <div id="previewWrapper" class="canvas-wrapper ratio-9-16 bg-black rounded-2xl flex flex-col justify-center items-center shadow-2xl" style="background-image: url('https://images.unsplash.com/photo-1601142634808-38923eb7c560?ixlib=rb-4.0.3&auto=format&fit=crop&w=1080&q=80'); background-size: cover; background-position: center;">
+                        
+                        <div id="overlayContent" class="absolute inset-0 flex flex-col justify-center items-center">
+                            <div id="textBox" class="glass-panel w-[92%] h-[84%] rounded-2xl p-4 flex flex-col justify-center items-center text-center transition-all duration-300 shadow-2xl">
+                                
+                                <div id="emptyState" class="text-center text-gray-300 py-6">
+                                    <i class="fa-solid fa-book-open text-3xl mb-2 opacity-50"></i>
+                                    <p class="text-xs">Belum ada ayat dimuat.<br>Pilih surah di tab pertama.</p>
+                                </div>
+
+                                <div id="quranDisplay" class="hidden flex flex-col items-center justify-center w-full h-full space-y-3">
+                                    <div id="previewSurahInfo" class="text-[10px] uppercase tracking-[0.2em] text-blue-300 font-bold">
+                                        Al-Fatihah • Ayat 1
+                                    </div>
+                                    <div id="previewArabic" class="arabic-text text-white font-normal leading-relaxed text-[32px] my-1" style="line-height: 1.8;">
+                                        بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
+                                    </div>
+                                    <div class="w-12 h-[1px] bg-white/40 rounded-full my-1"></div>
+                                    <div id="previewTranslation" class="text-gray-100 text-[13px] font-medium leading-relaxed px-1">
+                                        Dengan menyebut nama Allah Yang Maha Pengasih lagi Maha Penyayang.
+                                    </div>
+                                    <div id="previewTranslationEn" class="text-gray-300 text-[11px] font-normal italic leading-relaxed px-1">
+                                        In the name of Allah, the Entirely Merciful, the Especially Merciful.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="loadingOverlay" class="absolute inset-0 bg-gray-950/85 backdrop-blur-sm flex flex-col items-center justify-center hidden z-20">
+                            <div class="spinner mb-2"></div>
+                            <p class="text-[11px] text-white font-medium" id="loadingText">Memuat data API...</p>
+                        </div>
                     </div>
                 </div>
 
-                <div class="flex gap-2">
-                    <button id="btnPrevAyat" class="w-10 h-10 rounded-full bg-[var(--background)] hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition disabled:opacity-50" disabled>
-                        <i class="fa-solid fa-backward-step"></i>
-                    </button>
-                    <button id="btnNextAyat" class="w-10 h-10 rounded-full bg-[var(--background)] hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition disabled:opacity-50" disabled>
-                        <i class="fa-solid fa-forward-step"></i>
-                    </button>
+                <!-- Bottom Audio Control Bar -->
+                <div class="bg-[var(--surface)] border-t border-gray-200 dark:border-gray-800 p-3 shrink-0 space-y-2">
+                    <div class="flex items-center gap-3">
+                        <button id="btnPlayPause" class="w-10 h-10 rounded-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center shadow-md transition disabled:opacity-50" disabled>
+                            <i class="fa-solid fa-play ml-0.5 text-xs" id="playIcon"></i>
+                        </button>
+                        
+                        <div class="flex-1 flex flex-col justify-center">
+                            <div class="flex justify-between text-[10px] mb-1 font-medium text-[var(--text-secondary)]">
+                                <span id="currentTimeDisplay">0:00</span>
+                                <span id="trackInfo" class="truncate max-w-[120px]">Audio belum dimuat</span>
+                                <span id="durationDisplay">0:00</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden cursor-pointer relative" id="progressBarContainer">
+                                <div id="progressBar" class="h-full bg-blue-500 w-0 transition-all duration-100"></div>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-1.5">
+                            <button id="btnPrevAyat" class="w-8 h-8 rounded-full bg-[var(--background)] hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-xs transition disabled:opacity-50" disabled>
+                                <i class="fa-solid fa-backward-step"></i>
+                            </button>
+                            <button id="btnNextAyat" class="w-8 h-8 rounded-full bg-[var(--background)] hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-xs transition disabled:opacity-50" disabled>
+                                <i class="fa-solid fa-forward-step"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <audio id="audioPlayer" class="hidden" preload="auto"></audio>
                 </div>
-
-                <audio id="audioPlayer" class="hidden" preload="auto"></audio>
-            </div>
-        </section>
-
-    </main>
-
-    <div id="exportModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 opacity-0 transition-opacity">
-        <div class="bg-[var(--surface)] border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl p-6 w-full max-w-md transform scale-95 transition-transform" id="exportModalContent">
-            <div class="flex justify-between items-center mb-5">
-                <h3 class="text-lg font-bold">Export Video Overlay</h3>
-                <button id="btnCloseModal" class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"><i class="fa-solid fa-xmark text-xl"></i></button>
-            </div>
-            
-            <p class="text-sm text-[var(--text-secondary)] mb-4">Sistem akan merekam pergerakan karaoke teks & audio tilawah secara sinkron ke format video WebM HD.</p>
-            
-            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-3 mb-6">
-                <p class="text-xs text-blue-800 dark:text-blue-300 font-medium"><i class="fa-solid fa-bolt mr-1"></i> Audio & Teks disinkronkan otomatis dengan Web Audio API.</p>
             </div>
 
-            <div class="flex gap-3">
-                <button id="btnStartRender" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-medium transition flex justify-center items-center gap-2">
+            <!-- TAB 3: DESAIN & TAMPILAN -->
+            <div id="tabDesign" class="tab-content flex-1 overflow-y-auto p-4 space-y-4">
+                <div class="bg-[var(--surface)] rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-800 space-y-3">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]"><i class="fa-solid fa-palette mr-1 text-blue-500"></i> Pengaturan Desain & Layer</h2>
+
+                    <div>
+                        <label class="block text-[11px] font-medium mb-1">Rasio Video</label>
+                        <div class="flex bg-[var(--background)] rounded-xl p-1 border border-gray-200 dark:border-gray-700">
+                            <button class="ratio-btn flex-1 py-1.5 text-[11px] rounded-lg font-medium transition active-ratio bg-[var(--surface)] shadow-sm" data-ratio="ratio-9-16">9:16 (TikTok)</button>
+                            <button class="ratio-btn flex-1 py-1.5 text-[11px] rounded-lg font-medium transition text-gray-500" data-ratio="ratio-1-1">1:1 (IG)</button>
+                            <button class="ratio-btn flex-1 py-1.5 text-[11px] rounded-lg font-medium transition text-gray-500" data-ratio="ratio-16-9">16:9 (YT)</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-medium mb-1">Preset Tampilan</label>
+                        <select id="presetSelect" class="w-full bg-[var(--background)] border border-gray-300 dark:border-gray-700 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="capcut-green">🟢 Chroma Green (CapCut)</option>
+                            <option value="dark-glass" selected>Dark Glass (Modern)</option>
+                            <option value="light-clean">Light Clean (Minimalis)</option>
+                            <option value="gold-luxury">Gold Luxury (Elegan)</option>
+                            <option value="transparent-card">Transparent Card (Full Overlay)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-medium mb-1">URL Gambar Latar</label>
+                        <input type="text" id="bgImageUrl" class="w-full bg-[var(--background)] border border-gray-300 dark:border-gray-700 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-blue-500 outline-none" value="https://images.unsplash.com/photo-1601142634808-38923eb7c560?ixlib=rb-4.0.3&auto=format&fit=crop&w=1080&q=80">
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-medium mb-1">Efek Karaoke Teks</label>
+                        <select id="karaokeMode" class="w-full bg-[var(--background)] border border-gray-300 dark:border-gray-700 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="word">Sorot Per Kata (Karaoke)</option>
+                            <option value="none">Tanpa Karaoke (Teks Biasa)</option>
+                        </select>
+                    </div>
+
+                    <div class="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-800">
+                        <div class="flex justify-between items-center text-xs">
+                            <span>Ukuran Teks Arab</span>
+                            <input type="range" id="sizeArabic" min="20" max="60" value="32" class="w-32 accent-blue-500">
+                        </div>
+                        <div class="flex justify-between items-center text-xs">
+                            <span>Ukuran Terjemahan ID</span>
+                            <input type="range" id="sizeTranslation" min="10" max="24" value="13" class="w-32 accent-blue-500">
+                        </div>
+                        <div class="flex justify-between items-center text-xs">
+                            <span>Ukuran Terjemahan EN</span>
+                            <input type="range" id="sizeTranslationEn" min="10" max="22" value="11" class="w-32 accent-blue-500">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Bottom Tab Bar -->
+            <nav class="h-16 bg-[var(--surface)] border-t border-gray-200 dark:border-gray-800 flex justify-around items-center px-2 z-20 shrink-0">
+                <button class="nav-tab flex flex-col items-center justify-center flex-1 py-1 text-blue-500 transition" data-target="tabSurah">
+                    <i class="fa-solid fa-list-ul text-base mb-0.5"></i>
+                    <span class="text-[10px] font-medium">Surah</span>
+                </button>
+                <button class="nav-tab flex flex-col items-center justify-center flex-1 py-1 text-gray-400 hover:text-blue-500 transition" data-target="tabStudio">
+                    <i class="fa-solid fa-play-circle text-base mb-0.5"></i>
+                    <span class="text-[10px] font-medium">Studio</span>
+                </button>
+                <button class="nav-tab flex flex-col items-center justify-center flex-1 py-1 text-gray-400 hover:text-blue-500 transition" data-target="tabDesign">
+                    <i class="fa-solid fa-sliders text-base mb-0.5"></i>
+                    <span class="text-[10px] font-medium">Desain</span>
+                </button>
+            </nav>
+
+        </main>
+    </div>
+
+    <!-- Export Modal -->
+    <div id="exportModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4 opacity-0 transition-opacity">
+        <div class="bg-[var(--surface)] border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl p-5 w-full max-w-sm transform scale-95 transition-transform" id="exportModalContent">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-sm font-bold">Export Video Overlay</h3>
+                <button id="btnCloseModal" class="text-gray-500 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <p class="text-xs text-[var(--text-secondary)] mb-4">Sistem akan merekam pergerakan karaoke teks & audio tilawah secara sinkron ke format video WebM HD.</p>
+            <div class="flex gap-2">
+                <button id="btnStartRender" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl font-medium text-xs transition flex justify-center items-center gap-1.5 shadow-md">
                     <i class="fa-solid fa-video"></i> Mulai Render & Download
                 </button>
-                <button id="btnCancelRender" class="flex-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 py-2.5 rounded-lg font-medium transition">
+                <button id="btnCancelRender" class="flex-1 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 py-2.5 rounded-xl font-medium text-xs transition">
                     Batal
                 </button>
             </div>
@@ -347,6 +427,7 @@
             isPlaying: false,
             currentRatio: 'ratio-9-16',
             isRecording: false,
+            customAudioUrl: null,
             apiBase: 'https://api.alquran.cloud/v1'
         };
 
@@ -357,7 +438,15 @@
             ayatEnd: document.getElementById('ayatEnd'),
             chkBismillah: document.getElementById('chkBismillah'),
             btnLoadAyat: document.getElementById('btnLoadAyat'),
+            qariSelect: document.getElementById('qariSelect'),
+            customAudioContainer: document.getElementById('customAudioContainer'),
+            customAudioFile: document.getElementById('customAudioFile'),
             
+            navTabs: document.querySelectorAll('.nav-tab'),
+            tabSurah: document.getElementById('tabSurah'),
+            tabStudio: document.getElementById('tabStudio'),
+            tabDesign: document.getElementById('tabDesign'),
+
             previewWrapper: document.getElementById('previewWrapper'),
             overlayContent: document.getElementById('overlayContent'),
             textBox: document.getElementById('textBox'),
@@ -389,7 +478,7 @@
             durationDisplay: document.getElementById('durationDisplay'),
             trackInfo: document.getElementById('trackInfo'),
             
-            btnExport: document.getElementById('btnExport'),
+            btnExportHeader: document.getElementById('btnExportHeader'),
             exportModal: document.getElementById('exportModal'),
             exportModalContent: document.getElementById('exportModalContent'),
             btnCloseModal: document.getElementById('btnCloseModal'),
@@ -403,6 +492,7 @@
 
         async function init() {
             setupTheme();
+            setupTabs();
             setupEventListeners();
             await loadSurahList();
             applyDesignPreset();
@@ -414,20 +504,58 @@
             });
         }
 
+        function setupTabs() {
+            DOM.navTabs.forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    const targetId = tab.dataset.target;
+                    
+                    DOM.navTabs.forEach(t => {
+                        t.classList.remove('text-blue-500');
+                        t.classList.add('text-gray-400');
+                    });
+                    tab.classList.add('text-blue-500');
+                    tab.classList.remove('text-gray-400');
+
+                    [DOM.tabSurah, DOM.tabStudio, DOM.tabDesign].forEach(el => {
+                        el.classList.remove('active');
+                    });
+                    document.getElementById(targetId).classList.add('active');
+                });
+            });
+        }
+
         function showNotification(msg) {
             const toast = document.createElement('div');
-            toast.className = 'fixed bottom-24 right-6 bg-gray-900 text-white text-xs px-4 py-3 rounded-lg shadow-xl z-50 transition-all duration-300 opacity-0 translate-y-2 flex items-center gap-2 border border-gray-700';
+            toast.className = 'fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-[11px] px-3 py-2 rounded-xl shadow-xl z-50 transition-all duration-300 opacity-0 translate-y-2 flex items-center gap-2 border border-gray-700';
             toast.innerHTML = `<i class="fa-solid fa-circle-info text-blue-400"></i> <span>${msg}</span>`;
             document.body.appendChild(toast);
             setTimeout(() => toast.classList.remove('opacity-0', 'translate-y-2'), 10);
             setTimeout(() => {
                 toast.classList.add('opacity-0', 'translate-y-2');
                 setTimeout(() => toast.remove(), 300);
-            }, 3500);
+            }, 3000);
         }
 
         function setupEventListeners() {
             DOM.btnLoadAyat.addEventListener('click', handleLoadAyat);
+            
+            DOM.qariSelect.addEventListener('change', (e) => {
+                if (e.target.value === 'custom') {
+                    DOM.customAudioContainer.classList.remove('hidden');
+                } else {
+                    DOM.customAudioContainer.classList.add('hidden');
+                    state.customAudioUrl = null;
+                }
+            });
+
+            DOM.customAudioFile.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    state.customAudioUrl = URL.createObjectURL(file);
+                    showNotification("Audio MP3 kustom berhasil dimuat.");
+                }
+            });
+
             DOM.bgImageUrl.addEventListener('input', (e) => {
                 const url = e.target.value.trim();
                 if(DOM.presetSelect.value !== 'capcut-green') {
@@ -475,7 +603,7 @@
                 DOM.audioPlayer.currentTime = pos * DOM.audioPlayer.duration;
             });
 
-            DOM.btnExport.addEventListener('click', openExportModal);
+            DOM.btnExportHeader.addEventListener('click', openExportModal);
             DOM.btnCloseModal.addEventListener('click', closeExportModal);
             DOM.btnCancelRender.addEventListener('click', closeExportModal);
             DOM.btnStartRender.addEventListener('click', startRecordingProcess);
@@ -489,7 +617,7 @@
             const pe = DOM.previewTranslationEn;
             const ps = DOM.previewSurahInfo;
 
-            tb.className = "flex flex-col justify-center items-center text-center transition-all duration-300 shadow-2xl p-6";
+            tb.className = "flex flex-col justify-center items-center text-center transition-all duration-300 shadow-2xl p-4";
             
             if (preset === 'capcut-green') {
                 DOM.previewWrapper.style.backgroundImage = 'none';
@@ -504,10 +632,10 @@
                 DOM.previewWrapper.style.backgroundImage = url ? `url('${url}')` : 'none';
                 if(!url) DOM.previewWrapper.style.backgroundColor = '#000';
 
-                tb.className += " w-[92%] h-[82%] rounded-2xl";
+                tb.className += " w-[92%] h-[84%] rounded-2xl";
 
                 if (preset === 'dark-glass') {
-                    tb.className += " bg-black/75 backdrop-blur-md border border-white/20";
+                    tb.className += " bg-black/78 backdrop-blur-md border border-white/20";
                     pa.style.color = '#ffffff';
                     pt.style.color = '#e5e7eb';
                     pe.style.color = '#9ca3af';
@@ -519,7 +647,7 @@
                     pe.style.color = '#6b7280';
                     ps.style.color = '#2563eb';
                 } else if (preset === 'gold-luxury') {
-                    tb.className += " bg-gray-950/90 backdrop-blur-md border border-yellow-600/60 shadow-[0_0_25px_rgba(202,138,4,0.35)]";
+                    tb.className += " bg-gray-950/90 backdrop-blur-md border border-yellow-600/60 shadow-[0_0_20px_rgba(202,138,4,0.3)]";
                     pa.style.color = '#fef08a';
                     pt.style.color = '#fde047';
                     pe.style.color = '#ca8a04';
@@ -540,6 +668,7 @@
                 const data = await res.json();
                 state.surahs = data.data;
                 
+                DOM.surahSelect.innerHTML = '<option value="">Pilih Surah...</option>';
                 state.surahs.forEach(s => {
                     const opt = document.createElement('option');
                     opt.value = s.number;
@@ -547,8 +676,8 @@
                     DOM.surahSelect.appendChild(opt);
                 });
             } catch (err) {
-                console.error("Gagal memuat daftar surah", err);
-                showNotification("Koneksi API bermasalah.");
+                console.error("Gagal memuat surah", err);
+                showNotification("Gagal memuat daftar surah.");
             }
         }
 
@@ -556,25 +685,25 @@
             const surahId = parseInt(DOM.surahSelect.value);
             const start = parseInt(DOM.ayatStart.value) || 1;
             const end = parseInt(DOM.ayatEnd.value) || start;
+            const selectedQari = DOM.qariSelect.value;
 
             if (!surahId) return showNotification("Pilih surah terlebih dahulu.");
             if (start > end) return showNotification("Rentang ayat tidak valid.");
             
             const surahData = state.surahs.find(s => s.number === surahId);
             if (!surahData) return showNotification("Data surah tidak ditemukan.");
-            if (end > surahData.numberOfAyahs) return showNotification(`Maksimal ayat untuk ${surahData.englishName} adalah ${surahData.numberOfAyahs}`);
+            if (end > surahData.numberOfAyahs) return showNotification(`Maksimal ${surahData.numberOfAyahs} ayat.`);
 
             DOM.loadingOverlay.classList.remove('hidden');
-            DOM.loadingText.textContent = "Mengambil data ayat & terjemahan (Kecepatan Tinggi)...";
+            DOM.loadingText.textContent = "Mengambil data ayat & audio...";
             
             try {
                 const playlist = [];
-
-                // NEW FEATURE: Fetch semua ayat dan terjemahan dalam 1 Panggilan API untuk mempercepat muat ayat hingga 90%
-                const editionsRes = await fetch(`${state.apiBase}/surah/${surahId}/editions/ar.alafasy,id.indonesian,en.sahih`);
+                const qariEdition = selectedQari === 'custom' ? 'ar.alafasy' : selectedQari;
+                const editionsRes = await fetch(`${state.apiBase}/surah/${surahId}/editions/${qariEdition},id.indonesian,en.sahih`);
                 const editionsData = await editionsRes.json();
                 
-                if (editionsData.code !== 200) throw new Error("Gagal mengambil data surah");
+                if (editionsData.code !== 200) throw new Error("Gagal mengambil data");
 
                 const arAyahs = editionsData.data[0].ayahs;
                 const idAyahs = editionsData.data[1].ayahs;
@@ -586,12 +715,13 @@
                         ...BISMILLAH_ITEM,
                         surahName: surahData.englishName,
                         surahNumber: 1,
-                        ayahNumber: 1
+                        ayahNumber: 1,
+                        audioUrl: selectedQari === 'custom' && state.customAudioUrl ? state.customAudioUrl : BISMILLAH_ITEM.audioUrl
                     });
                 }
 
                 for (let i = start; i <= end; i++) {
-                    const idx = i - 1; // Index array = Nomor Ayat - 1
+                    const idx = i - 1;
                     if (arAyahs[idx] && idAyahs[idx]) {
                         playlist.push({
                             surahName: surahData.englishName,
@@ -600,7 +730,7 @@
                             arabic: arAyahs[idx].text,
                             translation: idAyahs[idx].text,
                             translationEn: enAyahs[idx].text,
-                            audioUrl: arAyahs[idx].audio
+                            audioUrl: selectedQari === 'custom' && state.customAudioUrl ? state.customAudioUrl : arAyahs[idx].audio
                         });
                     }
                 }
@@ -620,13 +750,15 @@
                     DOM.quranDisplay.classList.remove('hidden');
                     
                     loadAyatToUI(state.currentIndex);
-                    showNotification(`Berhasil memuat ${playlist.length} item.`);
+                    showNotification(`Dimuat: ${playlist.length} ayat.`);
+                    
+                    document.querySelector('.nav-tab[data-target="tabStudio"]').click();
                 } else {
-                    showNotification("Tidak dapat mengambil ayat.");
+                    showNotification("Data ayat kosong.");
                 }
 
             } catch (err) {
-                console.error("Gagal memuat ayat", err);
+                console.error("Gagal muat ayat", err);
                 showNotification("Terjadi kesalahan koneksi.");
             } finally {
                 DOM.loadingOverlay.classList.add('hidden');
@@ -635,7 +767,6 @@
 
         async function preBufferAudioFiles(playlist) {
             const actx = new (window.AudioContext || window.webkitAudioContext)();
-            
             const buffers = await Promise.all(playlist.map(async (item) => {
                 try {
                     const buf = await fetchAudioArrayBuffer(item.audioUrl, item);
@@ -644,11 +775,9 @@
                         actx.decodeAudioData(buf, resolve, () => resolve(createSilentAudioBuffer(actx, 4.0)));
                     });
                 } catch(e) {
-                    console.log("Menggunakan buffer audio senyap (fallback).");
                     return createSilentAudioBuffer(actx, 4.0);
                 }
             }));
-            
             try { actx.close(); } catch(e){}
             return buffers;
         }
@@ -692,7 +821,7 @@
             DOM.currentTimeDisplay.textContent = '0:00';
             
             if (state.isPlaying && !state.isRecording) {
-                DOM.audioPlayer.play().catch(e => console.log(e));
+                DOM.audioPlayer.play().catch(e => {});
             }
         }
 
@@ -701,7 +830,6 @@
                 DOM.previewArabic.textContent = text;
                 return;
             }
-
             const words = text.split(' ');
             DOM.previewArabic.innerHTML = words.map((w, idx) => {
                 const isHighlight = idx === activeWordIdx;
@@ -711,7 +839,6 @@
 
         function togglePlay() {
             if (state.playlist.length === 0) return;
-            
             if (DOM.audioPlayer.paused) {
                 DOM.audioPlayer.play();
                 state.isPlaying = true;
@@ -739,7 +866,6 @@
 
         function handleAudioEnded() {
             if (state.isRecording) return;
-
             if (state.currentIndex < state.playlist.length - 1) {
                 playNextAyat();
             } else {
@@ -771,50 +897,37 @@
         }
 
         function openExportModal() {
-            if(state.playlist.length === 0) return showNotification("Silakan muat ayat terlebih dahulu.");
+            if(state.playlist.length === 0) return showNotification("Muat ayat terlebih dahulu.");
             DOM.exportModal.classList.remove('hidden');
             DOM.exportModal.classList.add('flex');
-            setTimeout(() => {
-                DOM.exportModal.classList.remove('opacity-0');
-                DOM.exportModalContent.classList.remove('scale-95');
-            }, 10);
+            setTimeout(() => DOM.exportModal.classList.remove('opacity-0'), 10);
         }
 
         function closeExportModal() {
             DOM.exportModal.classList.add('opacity-0');
-            DOM.exportModalContent.classList.add('scale-95');
             setTimeout(() => {
                 DOM.exportModal.classList.add('hidden');
                 DOM.exportModal.classList.remove('flex');
-            }, 300);
+            }, 250);
         }
 
         function base64ToArrayBuffer(base64) {
             const binaryString = window.atob(base64);
             const len = binaryString.length;
             const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
+            for (let i = 0; i < len; i++) bytes[i] = binaryString.charCodeAt(i);
             return bytes.buffer;
         }
 
         async function fetchAudioArrayBuffer(url, item = null) {
             const candidateUrls = [];
             if (url) candidateUrls.push(url);
-
             if (item && item.surahNumber !== undefined && item.ayahNumber !== undefined) {
                 const sStr = String(item.surahNumber).padStart(3, '0');
                 const aStr = String(item.ayahNumber).padStart(3, '0');
                 candidateUrls.push(`https://everyayah.com/data/Alafasy_128kbps/${sStr}${aStr}.mp3`);
-                candidateUrls.push(`https://audio.qurancdn.com/Alafasy/mp3/${sStr}${aStr}.mp3`);
-            } else if (url && (url.includes('alafasy/1.mp3') || item?.isBismillah)) {
-                candidateUrls.push('https://everyayah.com/data/Alafasy_128kbps/001001.mp3');
-                candidateUrls.push('https://audio.qurancdn.com/Alafasy/mp3/001001.mp3');
             }
-
             for (const targetUrl of candidateUrls) {
-                // Attempt 1: Direct fetch
                 try {
                     const response = await fetch(targetUrl);
                     if (response.ok) {
@@ -822,8 +935,6 @@
                         if (ab && ab.byteLength > 1000) return ab;
                     }
                 } catch (e) {}
-
-                // Attempt 2: AllOrigins Raw
                 try {
                     const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(targetUrl);
                     const response = await fetch(proxyUrl);
@@ -832,23 +943,8 @@
                         if (ab && ab.byteLength > 1000) return ab;
                     }
                 } catch (e) {}
-
-                // Attempt 3: AllOrigins JSON Base64
-                try {
-                    const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(targetUrl);
-                    const response = await fetch(proxyUrl);
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data && data.contents) {
-                            const base64Data = data.contents.includes(',') ? data.contents.split(',')[1] : data.contents;
-                            const ab = base64ToArrayBuffer(base64Data);
-                            if (ab && ab.byteLength > 1000) return ab;
-                        }
-                    }
-                } catch (e) {}
             }
-
-            return null; // Mencegah pelemparan pesan error yang terdeteksi konsol
+            return null;
         }
 
         async function loadSafeImage(url) {
@@ -864,7 +960,6 @@
 
         let mediaRecorder;
         let recordedChunks = [];
-        let renderInterval;
         let activeAudioSourceNode = null;
 
         async function startRecordingProcess() {
@@ -875,7 +970,7 @@
             recordedChunks = [];
             
             DOM.recordingState.classList.remove('hidden');
-            DOM.recordingProgressText.textContent = "Menyiapkan Perekaman HD...";
+            DOM.recordingProgressText.textContent = "Menyiapkan Rekaman HD...";
             
             DOM.audioPlayer.pause();
             state.isPlaying = false;
@@ -892,29 +987,21 @@
             const bgUrl = DOM.bgImageUrl.value.trim();
             const bgImage = (preset !== 'capcut-green' && bgUrl) ? await loadSafeImage(bgUrl) : null;
 
-            let audioCtx;
-            let mediaStreamDestination;
+            let audioCtx, mediaStreamDestination;
             try {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 if (audioCtx.state === 'suspended') await audioCtx.resume();
                 mediaStreamDestination = audioCtx.createMediaStreamDestination();
-            } catch(e) {
-                console.error("AudioContext init error:", e);
-            }
+            } catch(e) {}
 
             const videoStream = cvs.captureStream(30);
             const audioStream = mediaStreamDestination ? mediaStreamDestination.stream : null;
-            
             const tracks = [...videoStream.getVideoTracks()];
-            if (audioStream && audioStream.getAudioTracks().length > 0) {
-                tracks.push(...audioStream.getAudioTracks());
-            }
+            if (audioStream && audioStream.getAudioTracks().length > 0) tracks.push(...audioStream.getAudioTracks());
             const combinedStream = new MediaStream(tracks);
 
             let options = { mimeType: 'video/webm; codecs=vp8,opus' };
-            if (MediaRecorder.isTypeSupported('video/webm; codecs=vp9,opus')) {
-                options = { mimeType: 'video/webm; codecs=vp9,opus' };
-            }
+            if (MediaRecorder.isTypeSupported('video/webm; codecs=vp9,opus')) options = { mimeType: 'video/webm; codecs=vp9,opus' };
             options.videoBitsPerSecond = 8000000;
 
             try {
@@ -923,99 +1010,65 @@
                 mediaRecorder = new MediaRecorder(combinedStream);
             }
 
-            mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0) recordedChunks.push(e.data);
-            };
-
+            mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
             mediaRecorder.onstop = handleRecordingComplete;
             mediaRecorder.start(500);
 
-            let currentAudioStartTime = 0;
-            let currentAudioDuration = 0;
-
-            // Loop per-ayat dengan kecepatan penuh tanpa jeda buatan
             for (let i = 0; i < state.playlist.length; i++) {
                 if (!state.isRecording) break;
-                
                 state.currentIndex = i;
                 loadAyatToUI(i);
                 
-                DOM.recordingProgressText.textContent = `Merekam Ayat ${i + 1} dari ${state.playlist.length}`;
+                DOM.recordingProgressText.textContent = `Merekam Ayat ${i + 1}/${state.playlist.length}`;
 
                 const audioBuffer = state.audioBuffers[i];
+                let currentAudioStartTime = audioCtx ? audioCtx.currentTime : performance.now() / 1000;
+                let currentAudioDuration = 4.0;
+
                 if (audioBuffer && audioCtx && mediaStreamDestination) {
                     try {
                         const source = audioCtx.createBufferSource();
                         source.buffer = audioBuffer;
                         source.connect(audioCtx.destination);
                         source.connect(mediaStreamDestination);
-                        
-                        currentAudioStartTime = audioCtx.currentTime;
                         currentAudioDuration = audioBuffer.duration;
-                        
                         source.start(0);
                         activeAudioSourceNode = source;
-                    } catch(err) {
-                        console.error("Audio buffer playback error:", err);
-                    }
-                } else {
-                    currentAudioDuration = 4.0;
-                    currentAudioStartTime = performance.now() / 1000;
+                    } catch(err) {}
                 }
 
-                // Render Canvas Loop dengan optimasi waktu nyata
                 await new Promise((resolve) => {
                     const checkInterval = setInterval(() => {
-                        if (!state.isRecording) {
-                            clearInterval(checkInterval);
-                            resolve();
-                            return;
-                        }
-
+                        if (!state.isRecording) { clearInterval(checkInterval); resolve(); return; }
                         let elapsed = audioCtx ? (audioCtx.currentTime - currentAudioStartTime) : ((performance.now() / 1000) - currentAudioStartTime);
-                        const progress = Math.min(1.0, Math.max(0.0, elapsed / currentAudioDuration));
-
+                        let progress = Math.min(1.0, Math.max(0.0, elapsed / currentAudioDuration));
                         drawCanvasFrame(ctx, cvs.width, cvs.height, bgImage, progress);
-
                         if (elapsed >= currentAudioDuration || progress >= 1.0) {
                             clearInterval(checkInterval);
-                            if (activeAudioSourceNode) {
-                                try { activeAudioSourceNode.stop(); } catch(e){}
-                                activeAudioSourceNode = null;
-                            }
+                            if (activeAudioSourceNode) { try { activeAudioSourceNode.stop(); } catch(e){} activeAudioSourceNode = null; }
                             resolve();
                         }
                     }, 25);
                 });
 
-                // NEW FEATURE: Jeda transisi antar ayat dikunci hanya 1 Detik (1000 ms)
                 if (i < state.playlist.length - 1 && state.isRecording) {
-                    DOM.recordingProgressText.textContent = `Jeda Transisi...`;
                     await new Promise(resolve => {
                         let gapStart = performance.now();
                         const gapInterval = setInterval(() => {
                             if (!state.isRecording) { clearInterval(gapInterval); resolve(); return; }
-                            let gapElapsed = performance.now() - gapStart;
-                            drawCanvasFrame(ctx, cvs.width, cvs.height, bgImage, 1.0); // Tahan frame teks terakhir
-                            if (gapElapsed >= 1000) { // Tepat 1 detik
-                                clearInterval(gapInterval);
-                                resolve();
-                            }
+                            drawCanvasFrame(ctx, cvs.width, cvs.height, bgImage, 1.0);
+                            if (performance.now() - gapStart >= 800) { clearInterval(gapInterval); resolve(); }
                         }, 25);
                     });
                 }
             }
 
-            if (audioCtx) {
-                try { audioCtx.close(); } catch(e){}
-            }
-
+            if (audioCtx) { try { audioCtx.close(); } catch(e){} }
             endRecording();
         }
 
         function drawCanvasFrame(ctx, width, height, bgImage, audioProgressRatio) {
             const preset = DOM.presetSelect.value;
-
             if (preset === 'capcut-green') {
                 ctx.fillStyle = '#00FF00';
                 ctx.fillRect(0, 0, width, height);
@@ -1023,19 +1076,11 @@
                 const imgRatio = bgImage.width / bgImage.height;
                 const canvasRatio = width / height;
                 let drawW, drawH, drawX, drawY;
-                
                 if (imgRatio > canvasRatio) {
-                    drawH = height;
-                    drawW = bgImage.width * (height / bgImage.height);
-                    drawX = (width - drawW) / 2;
-                    drawY = 0;
+                    drawH = height; drawW = bgImage.width * (height / bgImage.height); drawX = (width - drawW) / 2; drawY = 0;
                 } else {
-                    drawW = width;
-                    drawH = bgImage.height * (width / bgImage.width);
-                    drawX = 0;
-                    drawY = (height - drawH) / 2;
+                    drawW = width; drawH = bgImage.height * (width / bgImage.width); drawX = 0; drawY = (height - drawH) / 2;
                 }
-                
                 ctx.drawImage(bgImage, drawX, drawY, drawW, drawH);
                 ctx.fillStyle = 'rgba(0,0,0,0.5)';
                 ctx.fillRect(0, 0, width, height);
@@ -1044,7 +1089,6 @@
                 ctx.fillRect(0, 0, width, height);
             }
 
-            // Kartu Overlay Full Screen (proporsional memenuhi layar HP)
             const isGreenPreset = (preset === 'capcut-green');
             const boxMargin = isGreenPreset ? 0 : (width * 0.04);
             const boxWidth = width - (boxMargin * 2);
@@ -1066,45 +1110,25 @@
             ctx.quadraticCurveTo(boxX, boxY, boxX + radius, boxY);
             ctx.closePath();
             
-            if (preset === 'capcut-green') {
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.95)';
-                ctx.strokeStyle = 'rgba(0, 0, 0, 0)';
-            } else if (preset === 'dark-glass') {
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.20)';
-            } else if (preset === 'light-clean') {
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-                ctx.strokeStyle = 'rgba(200, 200, 200, 0.5)';
-            } else if (preset === 'gold-luxury') {
-                ctx.fillStyle = 'rgba(8, 12, 20, 0.92)';
-                ctx.strokeStyle = 'rgba(202, 138, 4, 0.7)';
-            } else if (preset === 'transparent-card') {
-                ctx.fillStyle = 'rgba(0, 0, 0, 0)';
-                ctx.strokeStyle = 'rgba(0, 0, 0, 0)';
-            }
+            if (preset === 'capcut-green') { ctx.fillStyle = 'rgba(0, 0, 0, 0.95)'; ctx.strokeStyle = 'transparent'; }
+            else if (preset === 'dark-glass') { ctx.fillStyle = 'rgba(0, 0, 0, 0.78)'; ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'; }
+            else if (preset === 'light-clean') { ctx.fillStyle = 'rgba(255, 255, 255, 0.95)'; ctx.strokeStyle = 'rgba(200, 200, 200, 0.5)'; }
+            else if (preset === 'gold-luxury') { ctx.fillStyle = 'rgba(8, 12, 20, 0.92)'; ctx.strokeStyle = 'rgba(202, 138, 4, 0.7)'; }
+            else if (preset === 'transparent-card') { ctx.fillStyle = 'transparent'; ctx.strokeStyle = 'transparent'; }
             
             ctx.fill();
-            if (preset !== 'transparent-card') {
-                ctx.lineWidth = 3.5;
-                ctx.stroke();
-            }
+            if (preset !== 'transparent-card') { ctx.lineWidth = 3.5; ctx.stroke(); }
             ctx.restore();
 
             if(state.playlist.length > 0 && state.currentIndex >= 0) {
                 const data = state.playlist[state.currentIndex];
                 const centerX = width / 2;
                 
-                let colorArabic, colorTrans, colorTransEn, colorSurah;
-                if (preset === 'light-clean') {
-                    colorArabic = '#111827'; colorTrans = '#374151'; colorTransEn = '#6b7280'; colorSurah = '#2563eb';
-                } else if (preset === 'gold-luxury') {
-                    colorArabic = '#fef08a'; colorTrans = '#fde047'; colorTransEn = '#ca8a04'; colorSurah = '#eab308';
-                } else {
-                    colorArabic = '#ffffff'; colorTrans = '#e5e7eb'; colorTransEn = '#9ca3af'; colorSurah = '#60a5fa';
-                }
+                let colorArabic = '#ffffff', colorTrans = '#e5e7eb', colorTransEn = '#9ca3af', colorSurah = '#60a5fa';
+                if (preset === 'light-clean') { colorArabic = '#111827'; colorTrans = '#374151'; colorTransEn = '#6b7280'; colorSurah = '#2563eb'; }
+                else if (preset === 'gold-luxury') { colorArabic = '#fef08a'; colorTrans = '#fde047'; colorTransEn = '#ca8a04'; colorSurah = '#eab308'; }
 
                 ctx.textAlign = 'center';
-                
                 ctx.font = `700 ${width * 0.028}px Inter`;
                 ctx.fillStyle = colorSurah;
                 const headerText = data.isBismillah ? `${data.surahName} • BASMALAH` : `${data.surahName} • AYAT ${data.ayahNumber}`;
@@ -1115,7 +1139,7 @@
                 const words = data.arabic.split(' ');
                 const activeWordIdx = isKaraoke ? Math.min(words.length - 1, Math.floor(audioProgressRatio * words.length)) : -1;
 
-                drawKaraokeArabicCanvas(ctx, words, activeWordIdx, centerX, boxY + (boxHeight * 0.35), boxWidth * 0.88, arabicSize, colorArabic);
+                drawKaraokeArabicCanvas(ctx, words, activeWordIdx, centerX, boxY + (boxHeight * 0.36), boxWidth * 0.88, arabicSize, colorArabic);
 
                 ctx.fillStyle = 'rgba(150,150,150,0.35)';
                 ctx.fillRect(centerX - (width * 0.15), boxY + (boxHeight * 0.62), width * 0.30, 2.5);
@@ -1136,11 +1160,7 @@
 
         function drawKaraokeArabicCanvas(ctx, words, activeWordIdx, centerX, startY, maxWidth, fontSize, defaultColor) {
             ctx.font = `normal ${fontSize}px 'Amiri', serif`;
-            
-            let lines = [];
-            let currentLine = [];
-            let currentLineWidth = 0;
-
+            let lines = [], currentLine = [], currentLineWidth = 0;
             for (let i = 0; i < words.length; i++) {
                 const wordWidth = ctx.measureText(words[i] + ' ').width;
                 if (currentLineWidth + wordWidth > maxWidth && currentLine.length > 0) {
@@ -1165,7 +1185,6 @@
                 line.forEach(item => {
                     const wWidth = ctx.measureText(item.word + ' ').width;
                     const isHighlight = item.index === activeWordIdx;
-
                     ctx.save();
                     if (isHighlight) {
                         ctx.fillStyle = '#facc15';
@@ -1175,23 +1194,18 @@
                     } else {
                         ctx.fillStyle = defaultColor;
                     }
-
                     ctx.textAlign = 'right';
                     ctx.fillText(item.word, currentX, y);
                     ctx.restore();
-
                     currentX -= wWidth;
                 });
-
                 y += lineHeight;
             });
         }
 
         function wrapText(context, text, x, y, maxWidth, lineHeight) {
             const words = text.split(' ');
-            let line = '';
-            let currentY = y;
-
+            let line = '', currentY = y;
             for(let n = 0; n < words.length; n++) {
                 const testLine = line + words[n] + ' ';
                 const metrics = context.measureText(testLine);
@@ -1210,38 +1224,29 @@
         function endRecording() {
             if (!state.isRecording) return;
             state.isRecording = false;
-            
             DOM.recordingState.classList.add('hidden');
-            
-            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                mediaRecorder.stop();
-            }
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
         }
 
         function handleRecordingComplete() {
-            if (recordedChunks.length === 0) {
-                showNotification("Gagal merekam video.");
-                return;
-            }
-
+            if (recordedChunks.length === 0) return showNotification("Gagal merekam video.");
             DOM.recordingState.classList.remove('hidden');
             DOM.recordingProgressText.textContent = "Menyimpan File Video...";
 
             const blob = new Blob(recordedChunks, { type: 'video/webm' });
             const url = URL.createObjectURL(blob);
-            
             const a = document.createElement('a');
             document.body.appendChild(a);
             a.style.display = 'none';
             a.href = url;
-            a.download = `Quran_Overlay_HD_${new Date().getTime()}.webm`;
+            a.download = `Quran_Mobile_Video_${new Date().getTime()}.webm`;
             a.click();
             
             setTimeout(() => {
                 window.URL.revokeObjectURL(url);
                 document.body.removeChild(a);
                 DOM.recordingState.classList.add('hidden');
-                showNotification("Render Selesai! Video berhasil diunduh.");
+                showNotification("Render Selesai! Video diunduh.");
             }, 100);
         }
 
