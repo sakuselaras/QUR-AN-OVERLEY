@@ -209,7 +209,7 @@
                     <div>
                         <label class="block text-[11px] font-medium mb-1">Pilih Qari / Sumber Audio</label>
                         <select id="qariSelect" class="w-full bg-[var(--background)] border border-gray-300 dark:border-gray-700 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
-                            <option value="ar.alafasy">Mishary Rashid Alafasy (Standar)</option>
+                            <option value="ar.ahmad_naina">Ahmad Saud (Standar)</option>
                             <option value="ar.abdulrahmanalsudais">Abdul Rahman Al-Sudais</option>
                             <option value="ar.minshawi">Mohamed Siddiq El-Minshawi</option>
                             <option value="ar.mahermuaiqly">Maher Al Muaiqly</option>
@@ -236,7 +236,7 @@
             </div>
 
             <!-- TAB 2: STUDIO PREVIEW & PLAYER -->
-            <div id="tabStudio" class="tab-content flex-1 overflow-hidden flex flex-col preview-container relative">
+            <div id="tabStudio" class="tab-content flex-1 overflow-hidden flex flex-col relative">
                 
                 <!-- Recording Overlay Indicator -->
                 <div id="recordingState" class="absolute top-3 left-1/2 transform -translate-x-1/2 bg-red-600/90 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-[10px] font-bold shadow-xl flex items-center gap-2 hidden z-50 border border-red-400">
@@ -245,7 +245,7 @@
                 </div>
 
                 <!-- Preview Area -->
-                <div class="flex-1 flex items-center justify-center p-3 overflow-hidden">
+                <div class="flex-1 flex items-center justify-center p-3 overflow-hidden preview-container">
                     <div id="previewWrapper" class="canvas-wrapper ratio-9-16 bg-black rounded-2xl flex flex-col justify-center items-center shadow-2xl" style="background-image: url('https://images.unsplash.com/photo-1601142634808-38923eb7c560?ixlib=rb-4.0.3&auto=format&fit=crop&w=1080&q=80'); background-size: cover; background-position: center;">
                         
                         <div id="overlayContent" class="absolute inset-0 flex flex-col justify-center items-center">
@@ -282,7 +282,7 @@
                 </div>
 
                 <!-- Bottom Audio Control Bar -->
-                <div class="bg-[var(--surface)] border-t border-gray-200 dark:border-gray-800 p-3 shrink-0 space-y-2">
+                <div class="bg-[var(--surface)] border-t border-gray-200 dark:border-gray-800 p-3 shrink-0 space-y-2 mt-auto">
                     <div class="flex items-center gap-3">
                         <button id="btnPlayPause" class="w-10 h-10 rounded-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center shadow-md transition disabled:opacity-50" disabled>
                             <i class="fa-solid fa-play ml-0.5 text-xs" id="playIcon"></i>
@@ -415,7 +415,7 @@
             arabic: 'بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ',
             translation: 'Dengan menyebut nama Allah Yang Maha Pengasih lagi Maha Penyayang.',
             translationEn: 'In the name of Allah, the Entirely Merciful, the Especially Merciful.',
-            audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/1.mp3',
+            audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.ahmad_naina/1.mp3',
             isBismillah: true
         };
 
@@ -699,7 +699,7 @@
             
             try {
                 const playlist = [];
-                const qariEdition = selectedQari === 'custom' ? 'ar.alafasy' : selectedQari;
+                const qariEdition = selectedQari === 'custom' ? 'ar.ahmad_naina' : selectedQari;
                 const editionsRes = await fetch(`${state.apiBase}/surah/${surahId}/editions/${qariEdition},id.indonesian,en.sahih`);
                 const editionsData = await editionsRes.json();
                 
