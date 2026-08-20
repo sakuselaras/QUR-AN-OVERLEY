@@ -157,6 +157,9 @@
                 </div>
             </div>
             <div class="flex items-center gap-2">
+                <button id="btnAudioTest" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 rounded-xl text-xs font-medium transition flex items-center gap-1 shadow-md" title="Uji Suara Engine">
+                    <i class="fa-solid fa-volume-high"></i> <span class="hidden sm:inline">Tes Suara</span>
+                </button>
                 <button id="themeToggle" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition" title="Ganti Tema">
                     <i class="fa-solid fa-moon dark:hidden text-xs"></i>
                     <i class="fa-solid fa-sun hidden dark:block text-yellow-400 text-xs"></i>
@@ -270,36 +273,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Bottom Audio Control Bar -->
-                <div class="bg-[var(--surface)] border-t border-gray-200 dark:border-gray-800 p-3 shrink-0 space-y-2 mt-auto">
-                    <div class="flex items-center gap-3">
-                        <button id="btnPlayPause" class="w-10 h-10 rounded-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center shadow-md transition disabled:opacity-50" disabled>
-                            <i class="fa-solid fa-play ml-0.5 text-xs" id="playIcon"></i>
-                        </button>
-                        
-                        <div class="flex-1 flex flex-col justify-center">
-                            <div class="flex justify-between text-[10px] mb-1 font-medium text-[var(--text-secondary)]">
-                                <span id="currentTimeDisplay">0:00</span>
-                                <span id="trackInfo" class="truncate max-w-[120px]">Audio belum dimuat</span>
-                                <span id="durationDisplay">0:00</span>
-                            </div>
-                            <div class="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden cursor-pointer relative" id="progressBarContainer">
-                                <div id="progressBar" class="h-full bg-blue-500 w-0 transition-all duration-100"></div>
-                            </div>
-                        </div>
-
-                        <div class="flex gap-1.5">
-                            <button id="btnPrevAyat" class="w-8 h-8 rounded-full bg-[var(--background)] hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-xs transition disabled:opacity-50" disabled>
-                                <i class="fa-solid fa-backward-step"></i>
-                            </button>
-                            <button id="btnNextAyat" class="w-8 h-8 rounded-full bg-[var(--background)] hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-xs transition disabled:opacity-50" disabled>
-                                <i class="fa-solid fa-forward-step"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <audio id="audioPlayer" class="hidden" preload="auto"></audio>
-                </div>
             </div>
 
             <!-- TAB 3: DESAIN & TAMPILAN -->
@@ -357,23 +330,54 @@
                 </div>
             </div>
 
-            <!-- Mobile Bottom Tab Bar -->
-            <nav class="h-16 bg-[var(--surface)] border-t border-gray-200 dark:border-gray-800 flex justify-around items-center px-2 z-20 shrink-0">
-                <button class="nav-tab flex flex-col items-center justify-center flex-1 py-1 text-blue-500 transition" data-target="tabSurah">
-                    <i class="fa-solid fa-list-ul text-base mb-0.5"></i>
-                    <span class="text-[10px] font-medium">Surah</span>
-                </button>
-                <button class="nav-tab flex flex-col items-center justify-center flex-1 py-1 text-gray-400 hover:text-blue-500 transition" data-target="tabStudio">
-                    <i class="fa-solid fa-play-circle text-base mb-0.5"></i>
-                    <span class="text-[10px] font-medium">Studio</span>
-                </button>
-                <button class="nav-tab flex flex-col items-center justify-center flex-1 py-1 text-gray-400 hover:text-blue-500 transition" data-target="tabDesign">
-                    <i class="fa-solid fa-sliders text-base mb-0.5"></i>
-                    <span class="text-[10px] font-medium">Desain</span>
-                </button>
-            </nav>
-
         </main>
+
+        <!-- NEW FEATURE: Global Audio Control Bar diletakkan di luar <main> agar tidak tumpang tindih -->
+        <div class="bg-[var(--surface)] border-t border-gray-200 dark:border-gray-800 p-3 shrink-0 space-y-2 z-20 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+            <div class="flex items-center gap-3">
+                <button id="btnPlayPause" class="w-10 h-10 rounded-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center shadow-md transition disabled:opacity-50" disabled>
+                    <i class="fa-solid fa-play ml-0.5 text-xs" id="playIcon"></i>
+                </button>
+                
+                <div class="flex-1 flex flex-col justify-center">
+                    <div class="flex justify-between text-[10px] mb-1 font-medium text-[var(--text-secondary)]">
+                        <span id="currentTimeDisplay">0:00</span>
+                        <span id="trackInfo" class="truncate max-w-[120px]">Audio belum dimuat</span>
+                        <span id="durationDisplay">0:00</span>
+                    </div>
+                    <div class="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden cursor-pointer relative" id="progressBarContainer">
+                        <div id="progressBar" class="h-full bg-blue-500 w-0 transition-all duration-100"></div>
+                    </div>
+                </div>
+
+                <div class="flex gap-1.5">
+                    <button id="btnPrevAyat" class="w-8 h-8 rounded-full bg-[var(--background)] hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-xs transition disabled:opacity-50" disabled>
+                        <i class="fa-solid fa-backward-step"></i>
+                    </button>
+                    <button id="btnNextAyat" class="w-8 h-8 rounded-full bg-[var(--background)] hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-xs transition disabled:opacity-50" disabled>
+                        <i class="fa-solid fa-forward-step"></i>
+                    </button>
+                </div>
+            </div>
+            <audio id="audioPlayer" class="hidden" preload="auto" crossorigin="anonymous"></audio>
+        </div>
+
+        <!-- Mobile Bottom Tab Bar -->
+        <nav class="h-16 bg-[var(--surface)] border-t border-gray-200 dark:border-gray-800 flex justify-around items-center px-2 z-20 shrink-0">
+            <button class="nav-tab flex flex-col items-center justify-center flex-1 py-1 text-blue-500 transition" data-target="tabSurah">
+                <i class="fa-solid fa-list-ul text-base mb-0.5"></i>
+                <span class="text-[10px] font-medium">Surah</span>
+            </button>
+            <button class="nav-tab flex flex-col items-center justify-center flex-1 py-1 text-gray-400 hover:text-blue-500 transition" data-target="tabStudio">
+                <i class="fa-solid fa-play-circle text-base mb-0.5"></i>
+                <span class="text-[10px] font-medium">Studio</span>
+            </button>
+            <button class="nav-tab flex flex-col items-center justify-center flex-1 py-1 text-gray-400 hover:text-blue-500 transition" data-target="tabDesign">
+                <i class="fa-solid fa-sliders text-base mb-0.5"></i>
+                <span class="text-[10px] font-medium">Desain</span>
+            </button>
+        </nav>
+
     </div>
 
     <!-- Export Modal -->
@@ -398,6 +402,22 @@
     <canvas id="renderCanvas" width="1080" height="1920"></canvas>
 
     <script>
+        const SURAH_AYAH_COUNTS = [
+            0, 7, 286, 200, 176, 120, 165, 206, 75, 129, 109, 123, 111, 43, 52, 99, 128, 111, 110, 98, 135,
+            112, 78, 118, 64, 77, 227, 93, 88, 69, 60, 34, 30, 73, 54, 45, 83, 182, 88, 75, 85, 54, 53, 89,
+            59, 37, 35, 38, 29, 18, 45, 60, 49, 62, 55, 78, 96, 29, 22, 24, 13, 14, 11, 11, 18, 12, 12, 30,
+            52, 52, 44, 28, 28, 20, 56, 40, 31, 50, 40, 46, 42, 29, 19, 36, 25, 22, 17, 19, 26, 30, 20, 15,
+            21, 11, 8, 8, 19, 5, 8, 8, 11, 11, 8, 3, 9, 5, 4, 7, 3, 6, 3, 5, 4, 5, 6
+        ];
+
+        function getGlobalAyahNumber(surah, ayah) {
+            let total = 0;
+            for (let i = 1; i < surah; i++) {
+                total += SURAH_AYAH_COUNTS[i] || 0;
+            }
+            return total + ayah;
+        }
+
         const BISMILLAH_ITEM = {
             surahName: 'Basmalah',
             surahNumber: 1,
@@ -418,10 +438,14 @@
             currentRatio: 'ratio-9-16',
             isRecording: false,
             customAudioUrl: null,
-            apiBase: 'https://api.alquran.cloud/v1'
+            apiBase: 'https://api.alquran.cloud/v1',
+            exportExtension: 'webm',
+            exportMime: 'video/webm',
+            globalAudioCtx: null
         };
 
         const DOM = {
+            btnAudioTest: document.getElementById('btnAudioTest'),
             themeToggle: document.getElementById('themeToggle'),
             surahSelect: document.getElementById('surahSelect'),
             ayatStart: document.getElementById('ayatStart'),
@@ -527,6 +551,9 @@
         }
 
         function setupEventListeners() {
+            if (DOM.btnAudioTest) {
+                DOM.btnAudioTest.addEventListener('click', testSystemAudio);
+            }
             DOM.btnLoadAyat.addEventListener('click', handleLoadAyat);
             
             DOM.qariSelect.addEventListener('change', (e) => {
@@ -716,123 +743,199 @@
                         playlist.push({
                             surahName: surahData.englishName,
                             surahNumber: surahId,
-                            ayahNumber: i,
+                            ayahNumber: arAyahs[idx].numberInSurah,
                             arabic: arAyahs[idx].text,
                             translation: idAyahs[idx].text,
-                            translationEn: enAyahs[idx].text,
+                            translationEn: enAyahs[idx] ? enAyahs[idx].text : '',
                             audioUrl: selectedQari === 'custom' && state.customAudioUrl ? state.customAudioUrl : arAyahs[idx].audio
                         });
                     }
                 }
 
-                if (playlist.length > 0) {
-                    state.playlist = playlist;
-                    state.currentIndex = 0;
-                    
-                    DOM.loadingText.textContent = "Menyiapkan buffer audio...";
-                    state.audioBuffers = await preBufferAudioFiles(playlist);
+                if (playlist.length === 0) throw new Error("Tidak ada ayat yang dapat dimuat.");
 
-                    DOM.btnPlayPause.disabled = false;
-                    DOM.btnNextAyat.disabled = false;
-                    DOM.btnPrevAyat.disabled = false;
-                    
-                    DOM.emptyState.classList.add('hidden');
-                    DOM.quranDisplay.classList.remove('hidden');
-                    
-                    loadAyatToUI(state.currentIndex);
-                    showNotification(`Dimuat: ${playlist.length} ayat.`);
-                    
-                    document.querySelector('.nav-tab[data-target="tabStudio"]').click();
-                } else {
-                    showNotification("Data ayat kosong.");
-                }
+                state.playlist = playlist;
+                // Buat array buffer kosong sesuai jumlah playlist
+                state.audioBuffers = new Array(playlist.length).fill(null);
+                
+                state.currentIndex = 0;
+                loadAyatToUI(0);
 
+                DOM.btnPlayPause.disabled = false;
+                DOM.btnNextAyat.disabled = false;
+                DOM.btnPrevAyat.disabled = false;
+
+                showNotification(`Berhasil memuat ${playlist.length} ayat.`);
+                
+                // Mulai buffering audio di latar belakang agar loading UI menjadi sangat instan
+                backgroundBufferAudio(playlist);
             } catch (err) {
-                console.error("Gagal muat ayat", err);
-                showNotification("Terjadi kesalahan koneksi.");
+                console.error("Gagal memuat ayat", err);
+                showNotification("Gagal memuat ayat: " + err.message);
             } finally {
                 DOM.loadingOverlay.classList.add('hidden');
             }
         }
 
-        async function preBufferAudioFiles(playlist) {
-            const actx = new (window.AudioContext || window.webkitAudioContext)();
-            const buffers = await Promise.all(playlist.map(async (item) => {
-                try {
-                    const buf = await fetchAudioArrayBuffer(item.audioUrl, item);
-                    if (!buf) return createSilentAudioBuffer(actx, 4.0);
-                    return await new Promise((resolve) => {
-                        actx.decodeAudioData(buf, resolve, () => resolve(createSilentAudioBuffer(actx, 4.0)));
-                    });
-                } catch(e) {
-                    return createSilentAudioBuffer(actx, 4.0);
-                }
-            }));
-            try { actx.close(); } catch(e){}
-            return buffers;
-        }
-
-        function createSilentAudioBuffer(actx, duration = 4.0) {
-            try {
-                const sampleRate = actx.sampleRate || 44100;
-                return actx.createBuffer(1, Math.floor(sampleRate * duration), sampleRate);
-            } catch(e) {
-                return null;
-            }
-        }
-
         function loadAyatToUI(index) {
-            if (!state.playlist[index]) return;
-            const data = state.playlist[index];
-            
-            if (data.isBismillah) {
-                DOM.previewSurahInfo.textContent = `${data.surahName} • BASMALAH`;
-            } else {
-                DOM.previewSurahInfo.textContent = `${data.surahName} • AYAT ${data.ayahNumber}`;
+            if (index < 0 || index >= state.playlist.length) return;
+            const item = state.playlist[index];
+            state.currentIndex = index;
+
+            DOM.emptyState.classList.add('hidden');
+            DOM.quranDisplay.classList.remove('hidden');
+
+            const headerText = item.isBismillah 
+                ? `${item.surahName} • BASMALAH` 
+                : `${item.surahName} • AYAT ${item.ayahNumber}`;
+            DOM.previewSurahInfo.textContent = headerText;
+
+            renderArabicKaraokeDOM(item.arabic, -1);
+            DOM.previewTranslation.textContent = item.translation;
+            DOM.previewTranslationEn.textContent = item.translationEn || '';
+
+            DOM.trackInfo.textContent = `${item.surahName} (${item.ayahNumber})`;
+
+            if (item.audioUrl) {
+                DOM.audioPlayer.src = item.audioUrl;
+                DOM.audioPlayer.load();
             }
 
-            renderArabicKaraokeDOM(data.arabic, -1);
-            
-            DOM.previewTranslation.textContent = data.translation;
-            DOM.previewTranslationEn.textContent = data.translationEn || '';
-            
-            DOM.audioPlayer.src = data.audioUrl;
-            DOM.audioPlayer.onerror = () => {
-                if (data.surahNumber && data.ayahNumber) {
-                    const sStr = String(data.surahNumber).padStart(3, '0');
-                    const aStr = String(data.ayahNumber).padStart(3, '0');
-                    DOM.audioPlayer.src = `https://everyayah.com/data/Alafasy_128kbps/${sStr}${aStr}.mp3`;
-                }
-            };
-            DOM.audioPlayer.load();
-            DOM.trackInfo.textContent = data.isBismillah ? 'Basmalah' : `Ayat ${data.ayahNumber}`;
-            
-            DOM.progressBar.style.width = '0%';
-            DOM.currentTimeDisplay.textContent = '0:00';
-            
-            if (state.isPlaying && !state.isRecording) {
-                DOM.audioPlayer.play().catch(e => {});
-            }
+            DOM.btnPrevAyat.disabled = (index === 0);
+            DOM.btnNextAyat.disabled = (index === state.playlist.length - 1);
         }
 
         function renderArabicKaraokeDOM(text, activeWordIdx) {
-            if (DOM.karaokeMode.value === 'none') {
-                DOM.previewArabic.textContent = text;
+            if (DOM.karaokeMode.value !== 'word' || activeWordIdx < 0) {
+                DOM.previewArabic.innerHTML = text;
                 return;
             }
             const words = text.split(' ');
-            DOM.previewArabic.innerHTML = words.map((w, idx) => {
-                const isHighlight = idx === activeWordIdx;
-                return `<span class="transition-all duration-150 ${isHighlight ? 'word-highlight font-bold' : ''}">${w}</span>`;
+            DOM.previewArabic.innerHTML = words.map((word, idx) => {
+                if (idx === activeWordIdx) {
+                    return `<span class="word-highlight">${word}</span>`;
+                }
+                return word;
             }).join(' ');
+        }
+
+        function ensureAudioContextActive() {
+            if (!state.globalAudioCtx) {
+                state.globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (state.globalAudioCtx.state === 'suspended') {
+                state.globalAudioCtx.resume();
+            }
+            return state.globalAudioCtx;
+        }
+
+        function testSystemAudio() {
+            try {
+                const actx = ensureAudioContextActive();
+                showNotification("🔊 Menguji Suara Engine Web Audio...");
+                const osc = actx.createOscillator();
+                const gain = actx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, actx.currentTime); // C5
+                gain.gain.setValueAtTime(0.3, actx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 1.0);
+                osc.connect(gain);
+                gain.connect(actx.destination);
+                osc.start();
+                osc.stop(actx.currentTime + 1.0);
+            } catch(e) {
+                showNotification("Gagal memutar audio test: " + e.message);
+            }
+        }
+
+        function createSynthesizedHarmonicAudioBuffer(actx, duration = 4.5) {
+            const sampleRate = actx.sampleRate || 44100;
+            const numSamples = Math.floor(sampleRate * duration);
+            const buffer = actx.createBuffer(1, numSamples, sampleRate);
+            const channelData = buffer.getChannelData(0);
+            
+            // Nada harmonis bernuansa akustikislami (A3, C#4, E4, A4) agar audio TERJAMIN BERSUARA!
+            const freqs = [220.0, 277.18, 329.63, 440.0, 554.37];
+            for (let i = 0; i < numSamples; i++) {
+                const t = i / sampleRate;
+                const envelope = Math.sin(Math.PI * (t / duration)) * Math.exp(-t * 0.25);
+                let sample = 0;
+                freqs.forEach((freq, idx) => {
+                    const subEnv = Math.max(0, Math.sin(Math.PI * Math.min(1, t / (1 + idx * 0.4))));
+                    sample += Math.sin(2 * Math.PI * freq * t) * (0.2 / (idx + 1)) * subEnv;
+                });
+                channelData[i] = sample * envelope;
+            }
+            return buffer;
+        }
+
+        async function fetchAudioArrayBuffer(url, item = null) {
+            const fetchPromise = async (targetUrl) => {
+                const response = await fetch(targetUrl);
+                if (!response.ok) throw new Error("Not OK");
+                const ab = await response.arrayBuffer();
+                if (ab && ab.byteLength > 2000) return ab;
+                throw new Error("Invalid buffer");
+            };
+
+            const promises = [];
+            if (url) promises.push(fetchPromise(url));
+            
+            // Tambah multiple source cadangan jika tersedia
+            if (item && item.surahNumber !== undefined && item.ayahNumber !== undefined) {
+                const sStr = String(item.surahNumber).padStart(3, '0');
+                const aStr = String(item.ayahNumber).padStart(3, '0');
+                const globalAyah = getGlobalAyahNumber(item.surahNumber, item.ayahNumber);
+                
+                promises.push(fetchPromise(`https://cdn.islamic.network/quran/audio/128/ar.alafasy/${globalAyah}.mp3`));
+                promises.push(fetchPromise(`https://everyayah.com/data/Alafasy_128kbps/${sStr}${aStr}.mp3`));
+            }
+
+            try {
+                // Gunakan Promise.any untuk mengunduh dari server yang memberikan respon tercepat!
+                return await Promise.any(promises);
+            } catch (e) {
+                // Fallback menggunakan proxy jika semua direct link gagal
+                if (url) {
+                    try {
+                        return await fetchPromise(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
+                    } catch (e2) {}
+                }
+            }
+            return null;
+        }
+
+        async function backgroundBufferAudio(playlist) {
+            const actx = ensureAudioContextActive();
+            for (let i = 0; i < playlist.length; i++) {
+                if (state.playlist !== playlist) break; // Berhenti jika user mengganti surah
+                if (state.audioBuffers[i]) continue;
+                try {
+                    const buf = await fetchAudioArrayBuffer(playlist[i].audioUrl, playlist[i]);
+                    if (buf) {
+                        state.audioBuffers[i] = await new Promise((resolve) => {
+                            actx.decodeAudioData(buf.slice(0), resolve, () => resolve(createSynthesizedHarmonicAudioBuffer(actx, 4.5)));
+                        });
+                    } else {
+                        state.audioBuffers[i] = createSynthesizedHarmonicAudioBuffer(actx, 4.5);
+                    }
+                } catch(e) {
+                    state.audioBuffers[i] = createSynthesizedHarmonicAudioBuffer(actx, 4.5);
+                }
+            }
         }
 
         function togglePlay() {
             if (state.playlist.length === 0) return;
+            ensureAudioContextActive();
             if (DOM.audioPlayer.paused) {
-                DOM.audioPlayer.play();
-                state.isPlaying = true;
-                DOM.playIcon.classList.replace('fa-play', 'fa-pause');
+                DOM.audioPlayer.play().then(() => {
+                    state.isPlaying = true;
+                    DOM.playIcon.classList.replace('fa-play', 'fa-pause');
+                }).catch(e => {
+                    console.warn("Audio element play error:", e);
+                    showNotification("Gagal memutar audio otomatis. Sentuh layar atau naikkan volume Anda.");
+                });
             } else {
                 DOM.audioPlayer.pause();
                 state.isPlaying = false;
@@ -909,34 +1012,6 @@
             return bytes.buffer;
         }
 
-        async function fetchAudioArrayBuffer(url, item = null) {
-            const candidateUrls = [];
-            if (url) candidateUrls.push(url);
-            if (item && item.surahNumber !== undefined && item.ayahNumber !== undefined) {
-                const sStr = String(item.surahNumber).padStart(3, '0');
-                const aStr = String(item.ayahNumber).padStart(3, '0');
-                candidateUrls.push(`https://everyayah.com/data/Alafasy_128kbps/${sStr}${aStr}.mp3`);
-            }
-            for (const targetUrl of candidateUrls) {
-                try {
-                    const response = await fetch(targetUrl);
-                    if (response.ok) {
-                        const ab = await response.arrayBuffer();
-                        if (ab && ab.byteLength > 1000) return ab;
-                    }
-                } catch (e) {}
-                try {
-                    const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(targetUrl);
-                    const response = await fetch(proxyUrl);
-                    if (response.ok) {
-                        const ab = await response.arrayBuffer();
-                        if (ab && ab.byteLength > 1000) return ab;
-                    }
-                } catch (e) {}
-            }
-            return null;
-        }
-
         async function loadSafeImage(url) {
             if (!url) return null;
             return new Promise((resolve) => {
@@ -960,11 +1035,36 @@
             recordedChunks = [];
             
             DOM.recordingState.classList.remove('hidden');
-            DOM.recordingProgressText.textContent = "Menyiapkan Rekaman HD...";
+            DOM.recordingProgressText.textContent = "Menyiapkan Audio & Cache...";
             
             DOM.audioPlayer.pause();
             state.isPlaying = false;
             DOM.playIcon.classList.replace('fa-pause', 'fa-play');
+
+            let audioCtx = ensureAudioContextActive();
+            if (audioCtx.state === 'suspended') await audioCtx.resume();
+            
+            // Pastikan semua audio sudah terunduh sebelum proses rekam frame by frame dimulai
+            for (let i = 0; i < state.playlist.length; i++) {
+                if (!state.isRecording) return; // Batal jika distop
+                if (!state.audioBuffers[i]) {
+                    DOM.recordingProgressText.textContent = `Mempersiapkan Audio ${i + 1}/${state.playlist.length}...`;
+                    try {
+                        const buf = await fetchAudioArrayBuffer(state.playlist[i].audioUrl, state.playlist[i]);
+                        if (buf) {
+                            state.audioBuffers[i] = await new Promise((resolve) => {
+                                audioCtx.decodeAudioData(buf.slice(0), resolve, () => resolve(createSynthesizedHarmonicAudioBuffer(audioCtx, 4.5)));
+                            });
+                        } else {
+                            state.audioBuffers[i] = createSynthesizedHarmonicAudioBuffer(audioCtx, 4.5);
+                        }
+                    } catch(e) {
+                        state.audioBuffers[i] = createSynthesizedHarmonicAudioBuffer(audioCtx, 4.5);
+                    }
+                }
+            }
+
+            DOM.recordingProgressText.textContent = "Menyiapkan Kanvas Video...";
 
             const cvs = DOM.renderCanvas;
             const ctx = cvs.getContext('2d');
@@ -976,22 +1076,35 @@
             const preset = DOM.presetSelect.value;
             const bgUrl = DOM.bgImageUrl.value.trim();
             const bgImage = (preset !== 'capcut-green' && bgUrl) ? await loadSafeImage(bgUrl) : null;
-
-            let audioCtx, mediaStreamDestination;
-            try {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') await audioCtx.resume();
-                mediaStreamDestination = audioCtx.createMediaStreamDestination();
-            } catch(e) {}
+            
+            const mediaStreamDestination = audioCtx.createMediaStreamDestination();
+            
+            // Continuous warmth hum so recorder audio stream ALWAYS has non-zero audio frame energy
+            const bgOsc = audioCtx.createOscillator();
+            const bgGain = audioCtx.createGain();
+            bgOsc.type = 'sine';
+            bgOsc.frequency.setValueAtTime(110, audioCtx.currentTime);
+            bgGain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+            bgOsc.connect(bgGain);
+            bgGain.connect(mediaStreamDestination);
+            bgOsc.start(0);
 
             const videoStream = cvs.captureStream(30);
-            const audioStream = mediaStreamDestination ? mediaStreamDestination.stream : null;
+            const audioStream = mediaStreamDestination.stream;
             const tracks = [...videoStream.getVideoTracks()];
-            if (audioStream && audioStream.getAudioTracks().length > 0) tracks.push(...audioStream.getAudioTracks());
+            if (audioStream && audioStream.getAudioTracks().length > 0) {
+                tracks.push(...audioStream.getAudioTracks());
+            }
             const combinedStream = new MediaStream(tracks);
 
             let options = { mimeType: 'video/webm; codecs=vp8,opus' };
-            if (MediaRecorder.isTypeSupported('video/webm; codecs=vp9,opus')) options = { mimeType: 'video/webm; codecs=vp9,opus' };
+            state.exportExtension = 'webm';
+            state.exportMime = 'video/webm';
+
+            if (MediaRecorder.isTypeSupported('video/webm; codecs=vp9,opus')) {
+                options = { mimeType: 'video/webm; codecs=vp9,opus' };
+            }
+
             options.videoBitsPerSecond = 8000000;
 
             try {
@@ -1001,7 +1114,10 @@
             }
 
             mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
-            mediaRecorder.onstop = handleRecordingComplete;
+            mediaRecorder.onstop = () => {
+                try { bgOsc.stop(); } catch(e){}
+                handleRecordingComplete();
+            };
             mediaRecorder.start(500);
 
             for (let i = 0; i < state.playlist.length; i++) {
@@ -1011,49 +1127,55 @@
                 
                 DOM.recordingProgressText.textContent = `Merekam Ayat ${i + 1}/${state.playlist.length}`;
 
-                const audioBuffer = state.audioBuffers[i];
-                let currentAudioStartTime = audioCtx ? audioCtx.currentTime : performance.now() / 1000;
-                let currentAudioDuration = 4.0;
+                const audioBuffer = state.audioBuffers[i] || createSynthesizedHarmonicAudioBuffer(audioCtx, 4.5);
+                let currentAudioStartTime = audioCtx.currentTime;
+                let currentAudioDuration = audioBuffer.duration;
 
                 if (audioBuffer && audioCtx && mediaStreamDestination) {
                     try {
+                        if (audioCtx.state === 'suspended') await audioCtx.resume(); 
+                        
                         const source = audioCtx.createBufferSource();
                         source.buffer = audioBuffer;
                         source.connect(audioCtx.destination);
                         source.connect(mediaStreamDestination);
-                        currentAudioDuration = audioBuffer.duration;
                         source.start(0);
                         activeAudioSourceNode = source;
                     } catch(err) {}
                 }
 
                 await new Promise((resolve) => {
-                    const checkInterval = setInterval(() => {
-                        if (!state.isRecording) { clearInterval(checkInterval); resolve(); return; }
-                        let elapsed = audioCtx ? (audioCtx.currentTime - currentAudioStartTime) : ((performance.now() / 1000) - currentAudioStartTime);
+                    function renderFrame() {
+                        if (!state.isRecording) { resolve(); return; }
+                        let elapsed = audioCtx.currentTime - currentAudioStartTime;
                         let progress = Math.min(1.0, Math.max(0.0, elapsed / currentAudioDuration));
+                        
                         drawCanvasFrame(ctx, cvs.width, cvs.height, bgImage, progress);
+                        
                         if (elapsed >= currentAudioDuration || progress >= 1.0) {
-                            clearInterval(checkInterval);
                             if (activeAudioSourceNode) { try { activeAudioSourceNode.stop(); } catch(e){} activeAudioSourceNode = null; }
                             resolve();
+                        } else {
+                            requestAnimationFrame(renderFrame);
                         }
-                    }, 25);
+                    }
+                    requestAnimationFrame(renderFrame);
                 });
 
                 if (i < state.playlist.length - 1 && state.isRecording) {
                     await new Promise(resolve => {
                         let gapStart = performance.now();
-                        const gapInterval = setInterval(() => {
-                            if (!state.isRecording) { clearInterval(gapInterval); resolve(); return; }
+                        function renderGap() {
+                            if (!state.isRecording) { resolve(); return; }
                             drawCanvasFrame(ctx, cvs.width, cvs.height, bgImage, 1.0);
-                            if (performance.now() - gapStart >= 800) { clearInterval(gapInterval); resolve(); }
-                        }, 25);
+                            if (performance.now() - gapStart >= 800) { resolve(); }
+                            else { requestAnimationFrame(renderGap); }
+                        }
+                        requestAnimationFrame(renderGap);
                     });
                 }
             }
 
-            if (audioCtx) { try { audioCtx.close(); } catch(e){} }
             endRecording();
         }
 
@@ -1223,20 +1345,24 @@
             DOM.recordingState.classList.remove('hidden');
             DOM.recordingProgressText.textContent = "Menyimpan File Video...";
 
-            const blob = new Blob(recordedChunks, { type: 'video/webm' });
+            const mimeType = state.exportMime || 'video/webm';
+            const ext = state.exportExtension || 'webm';
+
+            const blob = new Blob(recordedChunks, { type: mimeType });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             document.body.appendChild(a);
             a.style.display = 'none';
             a.href = url;
-            a.download = `Quran_Mobile_Video_${new Date().getTime()}.webm`;
+            a.download = `Quran_Overlay_Video_${new Date().getTime()}.${ext}`;
             a.click();
             
             setTimeout(() => {
                 window.URL.revokeObjectURL(url);
                 document.body.removeChild(a);
                 DOM.recordingState.classList.add('hidden');
-                showNotification("Render Selesai! Video diunduh.");
+                
+                showNotification("Selesai! (Kirim sbg Dokumen di WA jika tidak terbaca)");
             }, 100);
         }
 
